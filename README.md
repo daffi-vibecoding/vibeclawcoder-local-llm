@@ -31,6 +31,36 @@ Primary build runtime:
 Specialist cloud assist:
 - Codex account for review/hard fixes/security checks only
 
+## Model strategy (and why)
+
+Default role model choices:
+- **Developer (local build lane):** `inferencer-local//mlx-community/MiniMax-M2.5-5bit`
+  - Why: lowest cloud cost, high throughput, supports near-perpetual coding on local hardware.
+- **Reviewer (fast quality gate):** `openai-codex/gpt-5.1-codex-mini`
+  - Why: quick and cheap review turnaround with strong code comprehension.
+- **Architect/Strategy (hard decisions):** `openai-codex/gpt-5.3-codex`
+  - Why: strongest reasoning for architecture, sequencing, and blocker resolution.
+
+## How to swap models
+
+There are two places to update:
+
+1) **Fork defaults (for new setups):**
+- `defaults/devclaw/workflow.yaml`
+
+2) **Role registry fallback defaults (runtime fallback):**
+- `lib/roles/registry.ts`
+
+Recommended process:
+1. Update model IDs in both files.
+2. Run type/build checks:
+   ```bash
+   npm run check
+   npm run build
+   ```
+3. Commit with a clear message, e.g. `chore: update role model mapping`.
+4. Test one developer dispatch + one reviewer dispatch before broad rollout.
+
 ## Product positioning
 
 Designed by a novice vibecoder for other novice vibecoders.
@@ -62,13 +92,11 @@ No extra complexity unless it clearly improves reliability.
 
 ### Add back (new minimal layer)
 - `mini/config.ts` — tiny config schema (models, intervals, repos, channel targets)
-- `mini/state.ts` — tiny local state store (JSON file; current task, last sync, blockers)
+- `mini/state.ts` — tiny local state store (JSON file; current task, blockers)
 - `mini/loop-controller.ts` — 5-minute controller loop (keep coding alive/resume on crash)
-- `mini/sync-runner.ts` — 2-hour git sync loop (commit/push/pr-summary)
 - `mini/status-ticker.ts` — 20-minute status emitter (read-only, concise output)
 - `mini/tasks.ts` — tiny task queue contract (`todo/doing/done/blocked`) + GitHub mapper
 - `scripts/run-loop.sh` — local launcher script
-- `scripts/run-sync.sh` — local sync trigger
 - `scripts/run-ticker.sh` — local status trigger
 - `docs/MINI-ARCHITECTURE.md` — one-page design
 - `docs/OPERATOR-RUNBOOK.md` — one-page daily usage + recovery guide
