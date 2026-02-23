@@ -2,6 +2,12 @@
 
 A simplified, local-first fork of DevClaw for novice vibecoders.
 
+## Attribution & License
+
+This project is forked from `laurentenhoor/devclaw` and uses the upstream MIT license.
+Original copyright and permission notice are retained in `LICENSE`.
+Additional code and modifications in this fork are released under the same MIT terms by `daffi-vibecoding`.
+
 ## Why this exists
 
 This fork is designed to keep the useful DevClaw core (task rails + GitHub live workflow + chat-driven control) while cutting complexity and cloud burn.
