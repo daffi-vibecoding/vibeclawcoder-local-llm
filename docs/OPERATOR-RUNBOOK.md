@@ -12,7 +12,7 @@
 
 ## During day
 - Every 20 min: run `npm run mini:ticker`
-- Every 2h: run `npm run mini:sync`
+- DevClaw handles live GitHub workflow (no 2h sync loop)
 - Intervene only on blockers >10 minutes
 
 ## End of day

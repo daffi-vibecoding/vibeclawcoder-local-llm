@@ -33,8 +33,8 @@ This repository is in a pruning phase:
 
 ## Planned minimal workflow
 
-- simple coding loop (local)
-- periodic sync loop (GitHub)
+- simple coding loop (local-first)
+- default DevClaw GitHub flow (live issue/PR lifecycle)
 - lightweight status ticker
 - minimal role/state complexity
 
