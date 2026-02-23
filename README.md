@@ -2,6 +2,20 @@
 
 A simplified, local-first fork of DevClaw for novice vibecoders.
 
+## Quick Start (3 commands)
+
+```bash
+git clone git@github.com:daffi-vibecoding/vibeclawcoder-local-llm.git
+cd vibeclawcoder-local-llm
+npm install && npm run check && npm run build
+```
+
+Then:
+1. Copy `mini/config.example.json` -> `mini/config.json`
+2. Run local loop (dry-run): `npm run mini:loop`
+3. Run ticker: `npm run mini:ticker`
+
+
 ## Attribution & License
 
 This project is forked from `laurentenhoor/devclaw` and uses the upstream MIT license.
