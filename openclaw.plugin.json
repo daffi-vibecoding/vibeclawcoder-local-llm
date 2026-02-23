@@ -1,7 +1,7 @@
 {
   "id": "devclaw",
-  "name": "DevClaw",
-  "description": "Multi-project dev/qa pipeline orchestration for OpenClaw. Developer tiers, atomic task management, session health, and audit logging.",
+  "name": "VibeClawCoder (Local LLM)",
+  "description": "Local-first coding orchestration fork for OpenClaw: simplified roles, MiniMax primary, Codex specialist review/strategy.",
   "configSchema": {
     "type": "object",
     "properties": {

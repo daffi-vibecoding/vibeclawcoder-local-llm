@@ -70,10 +70,15 @@ Designed by a novice vibecoder for other novice vibecoders.
 
 ## Current fork stage
 
-This repository is in a pruning phase:
-- imported from upstream DevClaw
-- non-essential docs/assets/release scaffolding removed
-- next step is to add back only the minimal components needed for a stable local-first loop
+✅ **MVP v1.0.0 (local-first) is live**
+
+This fork now includes:
+- hard-cut 3-role model (`developer`, `reviewer`, `architect`)
+- local-first MiniMax default coding lane
+- Codex mini review lane + Codex 5.3 strategy lane
+- minimal operator docs and runbook
+- lean defaults restored for stable setup/scaffolding
+
 
 ## Planned minimal workflow
 
@@ -84,7 +89,16 @@ This repository is in a pruning phase:
 
 No extra complexity unless it clearly improves reliability.
 
-## Phase 2: Minimal files to keep/add back (design only)
+## MVP scope (implemented)
+
+- `scripts/run-loop.mjs` + `scripts/run-loop.sh` (local controller loop)
+- `scripts/run-ticker.mjs` + `scripts/run-ticker.sh` (status ticker)
+- `mini/config.example.json` (starter config)
+- `docs/MINI-ARCHITECTURE.md`
+- `docs/OPERATOR-RUNBOOK.md`
+
+## Post-MVP roadmap (optional)
+
 
 ### Keep from upstream core
 - `index.ts` — plugin entrypoint
