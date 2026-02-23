@@ -1,9 +1,9 @@
 # VibeClawCoder Mini Architecture
 
 ## Core loops
-1. 5-minute controller loop: keeps local coding lane alive and resumes work on crash.
-2. 2-hour sync loop: commits/pushes local deltas and updates PR status.
-3. 20-minute ticker: status-only reporting.
+1. 5-minute controller loop (`scripts/run-loop.mjs`): fills developer lanes from `To Do`.
+2. 2-hour sync loop (`scripts/run-sync.mjs`): commits/pushes local deltas.
+3. 20-minute ticker (`scripts/run-ticker.mjs`): status-only reporting.
 
 ## Model policy
 - Primary coding: local MiniMax 2.5 5bit

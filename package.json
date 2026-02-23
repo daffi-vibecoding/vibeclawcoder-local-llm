@@ -46,7 +46,10 @@
     "build": "node build.mjs",
     "check": "tsc --noEmit",
     "watch": "tsc --noEmit --watch",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "mini:loop": "node ./scripts/run-loop.mjs",
+    "mini:sync": "node ./scripts/run-sync.mjs",
+    "mini:ticker": "node ./scripts/run-ticker.mjs"
   },
   "peerDependencies": {
     "openclaw": "^2026.2.21"

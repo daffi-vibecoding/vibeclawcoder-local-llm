@@ -6,3 +6,4 @@ dist/
 !openclaw.plugin.json
 .openclaw
 node_modules
+mini/config.json

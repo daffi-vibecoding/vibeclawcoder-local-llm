@@ -1,0 +1,15 @@
+{
+  "primaryModel": "inferencer-local//mlx-community/MiniMax-M2.5-5bit",
+  "inferencerBaseUrl": "http://127.0.0.1:8081",
+  "maxConcurrentDevelopers": 2,
+  "repos": [
+    {
+      "slug": "prostpal",
+      "repo": "daffi-vibecoding/ProstPal"
+    },
+    {
+      "slug": "daffidashboard",
+      "repo": "daffi-vibecoding/daffidashboard"
+    }
+  ]
+}
