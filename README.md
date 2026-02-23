@@ -4,23 +4,48 @@ A simplified, local-first fork of DevClaw for novice vibecoders.
 
 ## Setup + Model Swaps (single walkthrough)
 
+> **Important:** cloning this repo is not enough. You must also install/enable it as an OpenClaw plugin.
+
 ### Prerequisites
 - **Node.js** >= 20
 - **GitHub CLI** installed and authenticated (`gh auth login`)
 - **Inferencer** (or compatible local server) running at `http://127.0.0.1:8081`
 - Required repo labels created: `To Do`, `Doing`, `To Review`, `Reviewing`
+- OpenClaw gateway running and accessible
 
-### 1) Install
+### Agent-assisted install: questions to ask the user first
+If an agent is installing this for someone else, ask these before touching config:
+1. Which agent identity should own orchestration? (`<YOUR_OPERATOR_AGENT_ID>`)
+2. Which repos should be managed? (`<YOUR_GITHUB_USERNAME>/<YOUR_REPO_NAME_X>`)
+3. Preferred max concurrent developers? (start with `1`, then `2`)
+4. Should local MiniMax be primary coding model? (recommended: yes)
+5. Which channels/groups should receive task updates?
+
+### 1) Clone + build
 ```bash
 git clone git@github.com:<YOUR_GITHUB_USERNAME>/vibeclawcoder-local-llm.git
 cd vibeclawcoder-local-llm
-npm install && npm run check && npm run build
+npm install
+npm run check
+npm run build
 ```
 
-### 2) Choose operator ownership first (avoid fallback-to-main)
-- Pick one operator agent id (example: `<YOUR_OPERATOR_AGENT_ID>`).
-- Decide if this operator owns coding dispatch + channel announcements.
-- Do this before routing projects.
+### 2) Install plugin into OpenClaw (required)
+Use one of the following:
+
+```bash
+# from local path
+openclaw plugins install /absolute/path/to/vibeclawcoder-local-llm
+
+# then enable
+openclaw plugins enable vibeclawcoder-local-llm
+```
+
+Verify:
+```bash
+openclaw plugins list
+openclaw plugins info vibeclawcoder-local-llm
+```
 
 ### 3) Configure project repos
 1. Copy `mini/config.example.json` -> `mini/config.json`
@@ -28,11 +53,11 @@ npm install && npm run check && npm run build
    - `<YOUR_GITHUB_USERNAME>`
    - `<YOUR_REPO_NAME_1>`, `<YOUR_REPO_NAME_2>`
    - `<PROJECT_SLUG_1>`, `<PROJECT_SLUG_2>`
-3. Set `maxConcurrentDevelopers` to `1` initially (move to `2` after stable runs).
+3. Set `maxConcurrentDevelopers` to `1` initially (move to `2` after stability)
 
 ### 4) Confirm local model runtime is healthy
 - Ensure inferencer is running and exposes `/v1/models`
-- Confirm `primaryModel` in config exists on the inferencer server
+- Confirm `primaryModel` in config exists on inferencer
 - If local model is unavailable, fix runtime before dispatch
 
 ### 5) Configure or swap role models (optional)
@@ -57,7 +82,7 @@ Before first run, validate:
 2. Target chat/channel IDs are correct
 3. A test dispatch announcement appears from intended operator identity
 
-If it appears under `main`, fix routing before continuing.
+If announcements appear under `main`, fix routing before continuing.
 
 ### 7) First-run validation
 ```bash
@@ -122,7 +147,7 @@ Designed by a novice vibecoder for other novice vibecoders.
 
 ## Current fork stage
 
-✅ **MVP v1.0.4 (local-first) is live**
+✅ **MVP v1.0.5 (local-first) is live**
 
 This fork now includes:
 - hard-cut 3-role model (`developer`, `reviewer`, `architect`)
