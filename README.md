@@ -2,71 +2,69 @@
 
 A simplified, local-first fork of DevClaw for novice vibecoders.
 
-## Quick Start (3 commands)
+## Setup + Model Swaps (single walkthrough)
 
+### 1) Install
 ```bash
 git clone git@github.com:<YOUR_GITHUB_USERNAME>/vibeclawcoder-local-llm.git
 cd vibeclawcoder-local-llm
 npm install && npm run check && npm run build
 ```
 
-Then:
-1. Copy `mini/config.example.json` -> `mini/config.json`
-2. Replace placeholders in `mini/config.json` (`<YOUR_GITHUB_USERNAME>`, `<YOUR_REPO_NAME_X>`, slugs)
-3. Run local loop (dry-run): `npm run mini:loop`
-4. Run ticker: `npm run mini:ticker`
-
-## Full setup walkthrough (no unanswered questions)
-
-### A) Decide your operator ownership first
+### 2) Choose operator ownership first (avoid fallback-to-main)
 - Pick one operator agent id (example: `<YOUR_OPERATOR_AGENT_ID>`).
-- Decide if this operator will own all coding dispatches and channel announcements.
-- Do this before routing any projects to avoid fallback-to-`main` confusion.
+- Decide if this operator owns coding dispatch + channel announcements.
+- Do this before routing projects.
 
-### B) Configure your repositories
-Edit `mini/config.json`:
-- `repos[].slug` -> your short project name
-- `repos[].repo` -> `<YOUR_GITHUB_USERNAME>/<YOUR_REPO_NAME>`
-- `maxConcurrentDevelopers` -> start with `1`, move to `2` after stability
+### 3) Configure project repos
+1. Copy `mini/config.example.json` -> `mini/config.json`
+2. Replace placeholders in `mini/config.json`:
+   - `<YOUR_GITHUB_USERNAME>`
+   - `<YOUR_REPO_NAME_1>`, `<YOUR_REPO_NAME_2>`
+   - `<PROJECT_SLUG_1>`, `<PROJECT_SLUG_2>`
+3. Set `maxConcurrentDevelopers` to `1` initially (move to `2` after stable runs).
 
-### C) Confirm model runtime availability
-- Ensure local inferencer is running and exposes `/v1/models`.
-- Confirm `primaryModel` id exists on your inferencer server.
-- If local model is unavailable, fix runtime first before dispatch.
+### 4) Confirm local model runtime is healthy
+- Ensure inferencer is running and exposes `/v1/models`
+- Confirm `primaryModel` in config exists on the inferencer server
+- If local model is unavailable, fix runtime before dispatch
 
-### D) Set role models (optional customization)
+### 5) Configure or swap role models (optional)
 Update BOTH files if changing defaults:
 1. `defaults/devclaw/workflow.yaml`
 2. `lib/roles/registry.ts`
 
 Recommended baseline:
-- developer.standard: local MiniMax
-- reviewer.standard: Codex Mini
-- architect.standard: Codex 5.3
+- developer.standard -> `inferencer-local//mlx-community/MiniMax-M2.5-5bit`
+- reviewer.standard -> `openai-codex/gpt-5.1-codex-mini`
+- architect.standard -> `openai-codex/gpt-5.3-codex`
 
-### E) Route to your intended operator agent
+After any model change:
+```bash
+npm run check
+npm run build
+```
+
+### 6) Route to your intended operator agent
 Before first run, validate:
 1. Project channel mapping uses correct `accountId` for your operator agent
-2. Target chat/channel ids are correct
+2. Target chat/channel IDs are correct
 3. A test dispatch announcement appears from intended operator identity
 
 If it appears under `main`, fix routing before continuing.
 
-### F) Validate install and behavior
-Run:
+### 7) First-run validation
 ```bash
-npm run check
-npm run build
 npm run mini:loop
 npm run mini:ticker
 ```
 
-Expected first-run result:
-- commands run without errors
-- no dispatch occurs unless `To Do` items exist
-- ticker prints current Doing/To Do/Review counts
+Expected first-run behavior:
+- commands run cleanly
+- no dispatch unless `To Do` exists
+- ticker prints Doing / To Do / Review counts
 
-### G) Day-1 operating mode
+### 8) Day-1 operating mode
 - keep concurrency low (1-2 developers)
 - watch ticker output
 - intervene only on blockers >10 minutes
