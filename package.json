@@ -1,6 +1,6 @@
 {
   "name": "@daffi-vibecoding/vibeclawcoder-local-llm",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "Local-first fork of DevClaw for lightweight OpenClaw coding orchestration",
   "type": "module",
   "license": "MIT",

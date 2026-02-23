@@ -4,6 +4,12 @@ A simplified, local-first fork of DevClaw for novice vibecoders.
 
 ## Setup + Model Swaps (single walkthrough)
 
+### Prerequisites
+- **Node.js** >= 20
+- **GitHub CLI** installed and authenticated (`gh auth login`)
+- **Inferencer** (or compatible local server) running at `http://127.0.0.1:8081`
+- Required repo labels created: `To Do`, `Doing`, `To Review`, `Reviewing`
+
 ### 1) Install
 ```bash
 git clone git@github.com:<YOUR_GITHUB_USERNAME>/vibeclawcoder-local-llm.git
@@ -116,7 +122,7 @@ Designed by a novice vibecoder for other novice vibecoders.
 
 ## Current fork stage
 
-✅ **MVP v1.0.3 (local-first) is live**
+✅ **MVP v1.0.4 (local-first) is live**
 
 This fork now includes:
 - hard-cut 3-role model (`developer`, `reviewer`, `architect`)
@@ -143,31 +149,16 @@ No extra complexity unless it clearly improves reliability.
 - `docs/MINI-ARCHITECTURE.md`
 - `docs/OPERATOR-RUNBOOK.md`
 
-## Post-MVP roadmap (optional)
+## Post-MVP roadmap (future enhancements)
 
+- `mini/config.ts` — typed config schema with validation (currently plain JSON)
+- `mini/state.ts` — persistent local state store for crash recovery
+- stronger retry/backoff in controller loop for GitHub API hiccups
+- optional webhook/event trigger mode for reduced polling
+- optional metrics export for observability (task latency/completion rate)
 
-### Keep from upstream core
-- `index.ts` — plugin entrypoint
-- `lib/` — only the minimum helpers needed for command routing + persistence
-- `openclaw.plugin.json` — plugin registration metadata
-- `package.json`, `tsconfig.json`, `build.mjs` — build/runtime scaffolding
-- `LICENSE`, `.gitignore`, `.npmignore`
-
-### Add back (new minimal layer)
-- `mini/config.ts` — tiny config schema (models, repos, channel targets)
-- `mini/state.ts` — tiny local state store (JSON file; current task, blockers)
-- `mini/loop-controller.ts` — 5-minute controller loop (keep coding alive/resume on crash)
-- `mini/status-ticker.ts` — 20-minute status emitter (read-only, concise output)
-- `mini/tasks.ts` — tiny task queue contract (`todo/doing/done/blocked`) + GitHub mapper
-- `scripts/run-loop.sh` — local launcher script
-- `scripts/run-ticker.sh` — local status trigger
-- `docs/MINI-ARCHITECTURE.md` — one-page design
-- `docs/OPERATOR-RUNBOOK.md` — one-page daily usage + recovery guide
-
-### Explicitly not re-adding (for now)
+### Explicitly out of scope
 - multi-role level matrix (`junior/medior/senior`)
 - deep workflow graph and extra state permutations
 - high-frequency autonomous issue-creation churn
 - heavy release/publishing/docs machinery
-
-This phase is design-only until reviewed and approved.

@@ -36,6 +36,23 @@ function hasLabel(issue, label) {
   return (issue.labels || []).some((l) => l.name === label);
 }
 
+function validateLabels(repo) {
+  try {
+    const out = sh('gh', ['label', 'list', '--repo', repo, '--json', 'name']);
+    const labels = JSON.parse(out).map((l) => l.name);
+    const required = ['To Do', 'Doing', 'To Review', 'Reviewing'];
+    const missing = required.filter((r) => !labels.includes(r));
+    if (missing.length) {
+      console.log(`❌ ${repo}: missing labels -> ${missing.join(', ')}`);
+      return false;
+    }
+    return true;
+  } catch {
+    console.log(`❌ ${repo}: unable to validate labels`);
+    return false;
+  }
+}
+
 function promoteAndStart(repo, issue) {
   // move To Do -> Doing via labels
   sh('gh', ['issue', 'edit', String(issue.number), '--repo', repo, '--remove-label', 'To Do', '--add-label', 'Doing']);
@@ -48,6 +65,11 @@ if (!modelHealthy()) {
 }
 
 for (const p of cfg.repos) {
+  if (!validateLabels(p.repo)) {
+    console.log(`\\n🔧 ${p.slug} — skipped (label setup incomplete)`);
+    continue;
+  }
+
   const issues = listOpenIssues(p.repo);
   const doing = issues.filter((i) => hasLabel(i, 'Doing'));
   const todo = issues.filter((i) => hasLabel(i, 'To Do'));
