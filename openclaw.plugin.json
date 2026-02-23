@@ -1,6 +1,6 @@
 {
   "id": "vibeclawcoder",
-  "name": "VibeClawCoder (Local LLM)",
+  "name": "VibeClawCoder",
   "description": "Local-first coding orchestration fork for OpenClaw: simplified roles, MiniMax primary, Codex specialist review/strategy.",
   "configSchema": {
     "type": "object",
@@ -13,41 +13,64 @@
             "type": "object",
             "description": "Developer tier models",
             "properties": {
-              "junior": { "type": "string" },
-              "medior": { "type": "string" },
-              "senior": { "type": "string" }
+              "junior": {
+                "type": "string"
+              },
+              "medior": {
+                "type": "string"
+              },
+              "senior": {
+                "type": "string"
+              }
             }
           },
           "qa": {
             "type": "object",
             "description": "QA tier models",
             "properties": {
-              "reviewer": { "type": "string" },
-              "tester": { "type": "string" }
+              "reviewer": {
+                "type": "string"
+              },
+              "tester": {
+                "type": "string"
+              }
             }
           }
         }
       },
       "projectExecution": {
         "type": "string",
-        "enum": ["parallel", "sequential"],
+        "enum": [
+          "parallel",
+          "sequential"
+        ],
         "description": "Project execution mode. Default: parallel."
       },
       "notifications": {
         "type": "object",
         "description": "Per-event-type notification toggles. All default to true — set to false to suppress.",
         "properties": {
-          "workerStart": { "type": "boolean" },
-          "workerComplete": { "type": "boolean" }
+          "workerStart": {
+            "type": "boolean"
+          },
+          "workerComplete": {
+            "type": "boolean"
+          }
         }
       },
       "work_heartbeat": {
         "type": "object",
         "description": "Token-free interval-based heartbeat service.",
         "properties": {
-          "enabled": { "type": "boolean" },
-          "intervalSeconds": { "type": "number" },
-          "maxPickupsPerTick": { "type": "number" }
+          "enabled": {
+            "type": "boolean"
+          },
+          "intervalSeconds": {
+            "type": "number"
+          },
+          "maxPickupsPerTick": {
+            "type": "number"
+          }
         }
       }
     }
