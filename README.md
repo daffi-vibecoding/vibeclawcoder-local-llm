@@ -159,7 +159,7 @@ Designed by a novice vibecoder for other novice vibecoders.
 
 ## Current fork stage
 
-✅ **MVP v1.0.0 (local-first) is live**
+✅ **MVP v1.0.3 (local-first) is live**
 
 This fork now includes:
 - hard-cut 3-role model (`developer`, `reviewer`, `architect`)
