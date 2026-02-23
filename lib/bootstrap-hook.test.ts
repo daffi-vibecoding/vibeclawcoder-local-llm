@@ -15,9 +15,9 @@ describe("parseVibeClawCoderSessionKey", () => {
     assert.deepStrictEqual(result, { projectName: "my-project", role: "developer" });
   });
 
-  it("should parse a tester session key", () => {
-    const result = parseVibeClawCoderSessionKey("agent:vibeclawcoder:subagent:webapp-tester-medior");
-    assert.deepStrictEqual(result, { projectName: "webapp", role: "tester" });
+  it("should parse a reviewer session key", () => {
+    const result = parseVibeClawCoderSessionKey("agent:vibeclawcoder:subagent:webapp-reviewer-junior");
+    assert.deepStrictEqual(result, { projectName: "webapp", role: "reviewer" });
   });
 
   it("should handle project names with hyphens", () => {
@@ -25,9 +25,9 @@ describe("parseVibeClawCoderSessionKey", () => {
     assert.deepStrictEqual(result, { projectName: "my-cool-project", role: "developer" });
   });
 
-  it("should handle project names with multiple hyphens and tester role", () => {
-    const result = parseVibeClawCoderSessionKey("agent:vibeclawcoder:subagent:a-b-c-d-tester-junior");
-    assert.deepStrictEqual(result, { projectName: "a-b-c-d", role: "tester" });
+  it("should handle project names with multiple hyphens and reviewer role", () => {
+    const result = parseVibeClawCoderSessionKey("agent:vibeclawcoder:subagent:a-b-c-d-reviewer-junior");
+    assert.deepStrictEqual(result, { projectName: "a-b-c-d", role: "reviewer" });
   });
 
   it("should return null for non-subagent session keys", () => {
