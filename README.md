@@ -4,12 +4,17 @@ A simplified, local-first fork of DevClaw for novice vibecoders.
 
 ## Why this exists
 
-This fork is designed to keep the spirit of DevClaw (task rails + GitHub sync + chat-driven control) while cutting complexity and cloud burn.
+This fork is designed to keep the useful DevClaw core (task rails + GitHub live workflow + chat-driven control) while cutting complexity and cloud burn.
 
 Target outcome:
 - codex-like effectiveness and speed
 - perpetual local coding usage
 - low monthly cloud cost with a GPT Plus account (see setup here https://youtu.be/7DNlQgl2Kk0?si=yLVtA88A6Y38pXso)
+
+Why fork now:
+- Anthropic/Claude API-heavy workflows become cost-prohibitive for always-on vibecoding
+- OpenAI Codex can be used selectively with OpenClaw while local MiniMax does most coding work
+- this gives a Codex-like feel with much lower recurring cloud spend
 
 ## Hardware + model baseline
 
