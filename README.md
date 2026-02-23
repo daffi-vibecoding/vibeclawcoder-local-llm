@@ -5,22 +5,79 @@ A simplified, local-first fork of DevClaw for novice vibecoders.
 ## Quick Start (3 commands)
 
 ```bash
-git clone git@github.com:daffi-vibecoding/vibeclawcoder-local-llm.git
+git clone git@github.com:<YOUR_GITHUB_USERNAME>/vibeclawcoder-local-llm.git
 cd vibeclawcoder-local-llm
 npm install && npm run check && npm run build
 ```
 
 Then:
 1. Copy `mini/config.example.json` -> `mini/config.json`
-2. Run local loop (dry-run): `npm run mini:loop`
-3. Run ticker: `npm run mini:ticker`
+2. Replace placeholders in `mini/config.json` (`<YOUR_GITHUB_USERNAME>`, `<YOUR_REPO_NAME_X>`, slugs)
+3. Run local loop (dry-run): `npm run mini:loop`
+4. Run ticker: `npm run mini:ticker`
+
+## Full setup walkthrough (no unanswered questions)
+
+### A) Decide your operator ownership first
+- Pick one operator agent id (example: `<YOUR_OPERATOR_AGENT_ID>`).
+- Decide if this operator will own all coding dispatches and channel announcements.
+- Do this before routing any projects to avoid fallback-to-`main` confusion.
+
+### B) Configure your repositories
+Edit `mini/config.json`:
+- `repos[].slug` -> your short project name
+- `repos[].repo` -> `<YOUR_GITHUB_USERNAME>/<YOUR_REPO_NAME>`
+- `maxConcurrentDevelopers` -> start with `1`, move to `2` after stability
+
+### C) Confirm model runtime availability
+- Ensure local inferencer is running and exposes `/v1/models`.
+- Confirm `primaryModel` id exists on your inferencer server.
+- If local model is unavailable, fix runtime first before dispatch.
+
+### D) Set role models (optional customization)
+Update BOTH files if changing defaults:
+1. `defaults/devclaw/workflow.yaml`
+2. `lib/roles/registry.ts`
+
+Recommended baseline:
+- developer.standard: local MiniMax
+- reviewer.standard: Codex Mini
+- architect.standard: Codex 5.3
+
+### E) Route to your intended operator agent
+Before first run, validate:
+1. Project channel mapping uses correct `accountId` for your operator agent
+2. Target chat/channel ids are correct
+3. A test dispatch announcement appears from intended operator identity
+
+If it appears under `main`, fix routing before continuing.
+
+### F) Validate install and behavior
+Run:
+```bash
+npm run check
+npm run build
+npm run mini:loop
+npm run mini:ticker
+```
+
+Expected first-run result:
+- commands run without errors
+- no dispatch occurs unless `To Do` items exist
+- ticker prints current Doing/To Do/Review counts
+
+### G) Day-1 operating mode
+- keep concurrency low (1-2 developers)
+- watch ticker output
+- intervene only on blockers >10 minutes
+- scale up only after stable runs
 
 
 ## Attribution & License
 
 This project is forked from `laurentenhoor/devclaw` and uses the upstream MIT license.
 Original copyright and permission notice are retained in `LICENSE`.
-Additional code and modifications in this fork are released under the same MIT terms by `daffi-vibecoding`.
+Additional code and modifications in this fork are released under the same MIT terms by the fork maintainer.
 
 Special thanks to Lauren ten Hoor (creator of DevClaw) for building the foundation this fork is based on.
 
@@ -62,10 +119,10 @@ Default role model choices:
 
 ### 0) Critical pre-setup: pick your operator agent (avoid fallback to `main`)
 
-If you want a specific agent (e.g. `mr-robot`) to run your coding workflow, lock routing first.
+If you want a specific agent (e.g. `<YOUR_OPERATOR_AGENT_ID>`) to run your coding workflow, lock routing first.
 
 Before running setup, ensure:
-1. Project channel mapping includes the right `accountId` (e.g. `mr-robot`) in `projects.json`.
+1. Project channel mapping includes the right `accountId` (e.g. `<YOUR_OPERATOR_AGENT_ID>`) in `projects.json`.
 2. The target chat/group IDs are correct for each project channel.
 3. The same agent has the expected channel binding in your OpenClaw runtime config.
 

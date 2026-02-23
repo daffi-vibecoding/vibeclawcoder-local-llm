@@ -4,12 +4,12 @@
   "maxConcurrentDevelopers": 2,
   "repos": [
     {
-      "slug": "prostpal",
-      "repo": "daffi-vibecoding/ProstPal"
+      "slug": "<PROJECT_SLUG_1>",
+      "repo": "<YOUR_GITHUB_USERNAME>/<YOUR_REPO_NAME_1>"
     },
     {
-      "slug": "daffidashboard",
-      "repo": "daffi-vibecoding/daffidashboard"
+      "slug": "<PROJECT_SLUG_2>",
+      "repo": "<YOUR_GITHUB_USERNAME>/<YOUR_REPO_NAME_2>"
     }
   ]
 }
