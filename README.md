@@ -103,15 +103,12 @@ Primary build runtime:
 Specialist cloud assist:
 - Codex account for review/hard fixes/security checks only
 
-## Model strategy (and why)
+## Model strategy (summary)
 
-Default role model choices:
-- **Developer (local build lane):** `inferencer-local//mlx-community/MiniMax-M2.5-5bit`
-  - Why: lowest cloud cost, high throughput, supports near-perpetual coding on local hardware.
-- **Reviewer (fast quality gate):** `openai-codex/gpt-5.1-codex-mini`
-  - Why: quick and cheap review turnaround with strong code comprehension.
-- **Architect/Strategy (hard decisions):** `openai-codex/gpt-5.3-codex`
-  - Why: strongest reasoning for architecture, sequencing, and blocker resolution.
+Model rationale is defined in the setup section above. In short:
+- Developer: local MiniMax (cost + throughput)
+- Reviewer: Codex Mini (fast review)
+- Architect/Strategy: Codex 5.3 (best reasoning)
 
 ## Setup + Model Swaps (with agent routing safeguards)
 
