@@ -1,5 +1,5 @@
 {
-  "id": "devclaw",
+  "id": "vibeclawcoder",
   "name": "VibeClawCoder (Local LLM)",
   "description": "Local-first coding orchestration fork for OpenClaw: simplified roles, MiniMax primary, Codex specialist review/strategy.",
   "configSchema": {
