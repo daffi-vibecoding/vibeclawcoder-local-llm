@@ -1,5 +1,5 @@
 /**
- * config/merge.ts — Deep merge for DevClaw config layers.
+ * config/merge.ts — Deep merge for VibeClawCoder config layers.
  *
  * Merge semantics:
  * - Objects: recursively merge (sparse override)
@@ -7,17 +7,17 @@
  * - `false` for a role: marks it as disabled
  * - Primitives: override
  */
-import type { DevClawConfig, RoleOverride } from "./types.js";
+import type { VibeClawCoderConfig, RoleOverride } from "./types.js";
 
 /**
  * Merge a config overlay on top of a base config.
  * Returns a new config — does not mutate inputs.
  */
 export function mergeConfig(
-  base: DevClawConfig,
-  overlay: DevClawConfig,
-): DevClawConfig {
-  const merged: DevClawConfig = {};
+  base: VibeClawCoderConfig,
+  overlay: VibeClawCoderConfig,
+): VibeClawCoderConfig {
+  const merged: VibeClawCoderConfig = {};
 
   // Merge roles
   if (base.roles || overlay.roles) {

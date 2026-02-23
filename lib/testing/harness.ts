@@ -154,7 +154,7 @@ export type TestHarness = {
   writePrompt(role: string, content: string, projectName?: string): Promise<void>;
   /**
    * Simulate the agent:bootstrap hook firing for a session key.
-   * Tests that AGENTS.md is stripped from bootstrap files for DevClaw workers.
+   * Tests that AGENTS.md is stripped from bootstrap files for VibeClawCoder workers.
    */
   simulateBootstrap(sessionKey: string): Promise<BootstrapResult>;
   /** Clean up temp directory. */
@@ -190,8 +190,8 @@ export async function createTestHarness(opts?: HarnessOptions): Promise<TestHarn
   } = opts ?? {};
 
   // Create temp workspace
-  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-e2e-"));
-  const dataDir = path.join(workspaceDir, "devclaw");
+  const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-e2e-"));
+  const dataDir = path.join(workspaceDir, "vibeclawcoder");
   const logDir = path.join(dataDir, "log");
   await fs.mkdir(logDir, { recursive: true });
 

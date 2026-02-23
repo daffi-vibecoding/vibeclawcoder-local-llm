@@ -1,8 +1,8 @@
 /**
- * setup/index.ts — DevClaw setup orchestrator.
+ * setup/index.ts — VibeClawCoder setup orchestrator.
  *
  * Coordinates: agent creation → plugin config → workspace scaffolding → model config.
- * Used by both the `setup` tool and the `openclaw devclaw setup` CLI command.
+ * Used by both the `setup` tool and the `openclaw vibeclawcoder setup` CLI command.
  */
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -51,7 +51,7 @@ export type SetupResult = {
 };
 
 /**
- * Run the full DevClaw setup.
+ * Run the full VibeClawCoder setup.
  *
  * 1. Create agent (optional) or resolve existing workspace
  * 2. Write plugin config to openclaw.json (heartbeat, tool restrictions — no models)

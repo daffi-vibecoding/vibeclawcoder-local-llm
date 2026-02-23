@@ -1,5 +1,5 @@
 /**
- * upgrade — Upgrade DevClaw plugin and workspace files.
+ * upgrade — Upgrade VibeClawCoder plugin and workspace files.
  *
  * Checks npm for a newer published version and installs it.
  * Then upgrades workspace files (docs, prompts, workflow states) to match
@@ -20,7 +20,7 @@ export function createUpgradeTool() {
     name: "upgrade",
     label: "Upgrade",
     description:
-      `Upgrade DevClaw plugin and workspace files. ` +
+      `Upgrade VibeClawCoder plugin and workspace files. ` +
       `Checks npm for a newer version and installs it via 'openclaw plugins install'. ` +
       `Then upgrades workspace docs, default prompts, and workflow states to match ` +
       `the running version (with .bak backups). Preserves roles, timeouts, and ` +
@@ -69,7 +69,7 @@ export function createUpgradeTool() {
           : { status: "already up to date" },
         skippedPrompts: result.skippedPrompts.length > 0
           ? {
-            files: result.skippedPrompts.map(r => `devclaw/prompts/${r}.md`),
+            files: result.skippedPrompts.map(r => `vibeclawcoder/prompts/${r}.md`),
             note: "These prompt files were customized and NOT updated. Run reset_defaults to get the latest defaults (creates .bak backups).",
           }
           : undefined,

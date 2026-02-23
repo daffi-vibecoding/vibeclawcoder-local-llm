@@ -14,7 +14,7 @@ import { getAllDefaultModels } from "./roles/index.js";
 export function isPluginConfigured(
   pluginConfig?: Record<string, unknown>,
 ): boolean {
-  // Models moved to workflow.yaml — check for any devclaw plugin config (heartbeat, notifications, etc.)
+  // Models moved to workflow.yaml — check for any vibeclawcoder plugin config (heartbeat, notifications, etc.)
   return !!pluginConfig && Object.keys(pluginConfig).length > 0;
 }
 
@@ -27,7 +27,7 @@ export async function hasWorkspaceFiles(
       path.join(workspaceDir, "AGENTS.md"),
       "utf-8",
     );
-    return content.includes("DevClaw") && content.includes("work_start");
+    return content.includes("VibeClawCoder") && content.includes("work_start");
   } catch {
     return false;
   }
@@ -49,13 +49,13 @@ function buildModelTable(): string {
 
 export function buildReconfigContext(): string {
   const modelTable = buildModelTable();
-  return `# DevClaw Reconfiguration
+  return `# VibeClawCoder Reconfiguration
 
-The user wants to reconfigure DevClaw. Default model configuration:
+The user wants to reconfigure VibeClawCoder. Default model configuration:
 
 ${modelTable}
 
-Models are configured in \`devclaw/workflow.yaml\`. Edit that file directly or call \`setup\` with a \`models\` object to update.
+Models are configured in \`vibeclawcoder/workflow.yaml\`. Edit that file directly or call \`setup\` with a \`models\` object to update.
 
 ## What can be changed
 1. **Model levels** — call \`setup\` with a \`models\` object containing only the levels to change
@@ -82,10 +82,10 @@ export function buildOnboardToolContext(): string {
   }
   const modelTable = rows.join("\n");
 
-  return `# DevClaw Onboarding
+  return `# VibeClawCoder Onboarding
 
-## What is DevClaw?
-DevClaw turns each Telegram group into an autonomous development team:
+## What is VibeClawCoder?
+VibeClawCoder turns each Telegram group into an autonomous development team:
 - An **orchestrator** that manages backlogs and delegates work
 - **Developer workers** (junior/medior/senior levels) that write code in isolated sessions
 - **Tester workers** that review code and run tests
@@ -94,7 +94,7 @@ DevClaw turns each Telegram group into an autonomous development team:
 ## Setup Steps
 
 **Step 1: Agent Selection**
-Ask: "Do you want to configure DevClaw for the current agent, or create a new dedicated agent?"
+Ask: "Do you want to configure VibeClawCoder for the current agent, or create a new dedicated agent?"
 - Current agent → no \`newAgentName\` needed
 - New agent → ask for:
   1. Agent name
@@ -110,7 +110,7 @@ Ask: "Do you want to configure DevClaw for the current agent, or create a new de
 
 1. **Call \`autoconfigure_models\`** to automatically discover and assign models:
    - Discovers all authenticated models in OpenClaw
-   - Uses AI to intelligently assign them to DevClaw roles
+   - Uses AI to intelligently assign them to VibeClawCoder roles
    - Returns a ready-to-use model configuration
 
 2. **Handle the result**:
@@ -141,7 +141,7 @@ Call \`setup\` with the collected answers:
 After setup completes, explain project isolation best practices:
 
 📱 **Telegram Group Guidance:**
-DevClaw uses **one Telegram group per project** for isolation and clean backlogs.
+VibeClawCoder uses **one Telegram group per project** for isolation and clean backlogs.
 
 **Recommended Setup:**
 1. **Create a new Telegram group** for each project
@@ -183,7 +183,7 @@ After project registration, briefly tell the user about their active workflow:
 
 - **Review policy**: human (default) — PRs need human approval on GitHub/GitLab, heartbeat auto-merges when approved.
 - **Test phase**: skipped by default — the testing step is in the workflow but issues bypass it automatically. To enable testing for a specific issue, remove the \`test:skip\` label. To enable globally, set \`testPolicy: agent\` in workflow.yaml.
-- **Customization**: They can change the review policy (human/agent/auto), enable testing (testPolicy: agent), or override settings per project. Point them to \`workflow.yaml\` in the devclaw data directory.
+- **Customization**: They can change the review policy (human/agent/auto), enable testing (testPolicy: agent), or override settings per project. Point them to \`workflow.yaml\` in the vibeclawcoder data directory.
 - Say: "Your workflow is set up with **human review** and **testing skipped** by default. You can enable testing per-issue by removing the \`test:skip\` label, or globally by setting \`testPolicy: agent\` in your workflow.yaml."
 
 ## Guidelines

@@ -1,7 +1,7 @@
 /**
  * prompt-hashes.ts — Hash manifest for prompt customization detection.
  *
- * Stores SHA-256 hashes of default prompt files written by DevClaw.
+ * Stores SHA-256 hashes of default prompt files written by VibeClawCoder.
  * On upgrade, compares the current file hash to the manifest to detect
  * user customizations (modified files are skipped, not overwritten).
  *

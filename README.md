@@ -1,6 +1,6 @@
 # VibeClawCoder (Local LLM)
 
-A simplified, local-first fork of DevClaw for novice vibecoders.
+A simplified, local-first fork of VibeClawCoder for novice vibecoders.
 
 ## Setup + Model Swaps (single walkthrough)
 
@@ -62,7 +62,7 @@ openclaw plugins info vibeclawcoder
 
 ### 5) Configure or swap role models (optional)
 Update BOTH files if changing defaults:
-1. `defaults/devclaw/workflow.yaml`
+1. `defaults/vibeclawcoder/workflow.yaml`
 2. `lib/roles/registry.ts`
 
 Recommended baseline:
@@ -104,15 +104,15 @@ Expected first-run behavior:
 
 ## Attribution & License
 
-This project is forked from `laurentenhoor/devclaw` and uses the upstream MIT license.
+This project is forked from `laurentenhoor/vibeclawcoder` and uses the upstream MIT license.
 Original copyright and permission notice are retained in `LICENSE`.
 Additional code and modifications in this fork are released under the same MIT terms by the fork maintainer.
 
-Special thanks to Lauren ten Hoor (creator of DevClaw) for building the foundation this fork is based on.
+Special thanks to Lauren ten Hoor (creator of VibeClawCoder) for building the foundation this fork is based on.
 
 ## Why this exists
 
-This fork is designed to keep the useful DevClaw core (task rails + GitHub live workflow + chat-driven control) while cutting complexity and cloud burn.
+This fork is designed to keep the useful VibeClawCoder core (task rails + GitHub live workflow + chat-driven control) while cutting complexity and cloud burn.
 
 Target outcome:
 - codex-like effectiveness and speed
@@ -160,7 +160,7 @@ This fork now includes:
 ## Planned minimal workflow
 
 - simple coding loop (local-first)
-- default DevClaw GitHub flow (live issue/PR lifecycle)
+- default VibeClawCoder GitHub flow (live issue/PR lifecycle)
 - lightweight status ticker
 - minimal role/state complexity
 

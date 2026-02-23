@@ -97,7 +97,7 @@ export function registerHeartbeatService(api: OpenClawPluginApi) {
   let intervalId: ReturnType<typeof setInterval> | null = null;
 
   api.registerService({
-    id: "devclaw-heartbeat",
+    id: "vibeclawcoder-heartbeat",
 
     start: async (ctx: ServiceContext) => {
       const { intervalSeconds } = HEARTBEAT_DEFAULTS;
@@ -130,7 +130,7 @@ export function registerHeartbeatService(api: OpenClawPluginApi) {
 // ---------------------------------------------------------------------------
 
 /**
- * Discover DevClaw agents by scanning which agent workspaces have projects.
+ * Discover VibeClawCoder agents by scanning which agent workspaces have projects.
  * Self-discovering: any agent whose workspace contains projects.json is processed.
  * Also checks the default workspace (agents.defaults.workspace) for projects.
  */

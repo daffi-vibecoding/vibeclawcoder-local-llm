@@ -1,5 +1,5 @@
 /**
- * onboard — Conversational DevClaw onboarding.
+ * onboard — Conversational VibeClawCoder onboarding.
  *
  * Returns step-by-step guidance. Call this before setup.
  */
@@ -12,7 +12,7 @@ export function createOnboardTool(api: OpenClawPluginApi) {
   return (ctx: ToolContext) => ({
     name: "onboard",
     label: "Onboard",
-    description: "Start DevClaw onboarding workflow. Returns step-by-step QA-style guidance. Call this first, then setup with collected answers.",
+    description: "Start VibeClawCoder onboarding workflow. Returns step-by-step QA-style guidance. Call this first, then setup with collected answers.",
     parameters: {
       type: "object",
       properties: {

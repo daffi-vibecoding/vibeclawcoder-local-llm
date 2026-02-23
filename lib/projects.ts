@@ -10,10 +10,10 @@
  * New schema:
  * {
  *   "projects": {
- *     "devclaw": {
- *       "slug": "devclaw",
- *       "repo": "~/git/devclaw",
- *       "repoRemote": "https://github.com/laurentenhoor/devclaw.git",
+ *     "vibeclawcoder": {
+ *       "slug": "vibeclawcoder",
+ *       "repo": "~/git/vibeclawcoder",
+ *       "repoRemote": "https://github.com/laurentenhoor/vibeclawcoder.git",
  *       "baseBranch": "main",
  *       "channels": [
  *         { "groupId": "-5176490302", "channel": "telegram", "name": "primary", "events": ["*"] }

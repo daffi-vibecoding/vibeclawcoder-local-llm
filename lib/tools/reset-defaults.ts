@@ -78,7 +78,7 @@ export function createResetDefaultsTool() {
       const workflowPath = path.join(dataDir, "workflow.yaml");
 
       if (await fileExists(workflowPath)) {
-        backedUp.push("devclaw/workflow.yaml.bak");
+        backedUp.push("vibeclawcoder/workflow.yaml.bak");
         const existing = YAML.parse(await fs.readFile(workflowPath, "utf-8")) as Record<string, unknown>;
         // Start from template document (preserves comments), graft user's roles/timeouts onto it
         const doc = YAML.parseDocument(WORKFLOW_YAML_TEMPLATE);
@@ -90,7 +90,7 @@ export function createResetDefaultsTool() {
         await fs.mkdir(dataDir, { recursive: true });
         await fs.writeFile(workflowPath, WORKFLOW_YAML_TEMPLATE, "utf-8");
       }
-      reset.push("devclaw/workflow.yaml (workflow section only)");
+      reset.push("vibeclawcoder/workflow.yaml (workflow section only)");
 
       // --- Workspace prompts -------------------------------------------------
 
@@ -100,9 +100,9 @@ export function createResetDefaultsTool() {
       const promptHashes: Record<string, string> = {};
       for (const [role, content] of Object.entries(DEFAULT_ROLE_INSTRUCTIONS)) {
         const filePath = path.join(promptsDir, `${role}.md`);
-        if (await fileExists(filePath)) backedUp.push(`devclaw/prompts/${role}.md.bak`);
+        if (await fileExists(filePath)) backedUp.push(`vibeclawcoder/prompts/${role}.md.bak`);
         await backupAndWrite(filePath, content);
-        reset.push(`devclaw/prompts/${role}.md`);
+        reset.push(`vibeclawcoder/prompts/${role}.md`);
         promptHashes[role] = hashContent(content);
       }
 
@@ -127,7 +127,7 @@ export function createResetDefaultsTool() {
         } catch { /* no prompts dir */ }
 
         for (const file of files) {
-          projectPromptFiles.push(`devclaw/projects/${projectName}/prompts/${file}`);
+          projectPromptFiles.push(`vibeclawcoder/projects/${projectName}/prompts/${file}`);
         }
       }
 

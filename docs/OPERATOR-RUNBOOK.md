@@ -12,12 +12,12 @@
 
 ## During day
 - Every 20 min: run `npm run mini:ticker`
-- DevClaw handles live GitHub workflow (no 2h sync loop)
+- VibeClawCoder handles live GitHub workflow (no 2h sync loop)
 - Intervene only on blockers >10 minutes
 
 ## End of day
 - Review open blockers and top 3 next tasks
-- No manual sync needed — DevClaw handles live GitHub workflow
+- No manual sync needed — VibeClawCoder handles live GitHub workflow
 
 ## Recovery
 - If MiniMax unavailable: restart inferencer and rerun `npm run mini:loop`

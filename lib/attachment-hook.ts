@@ -50,14 +50,14 @@ async function resolveProjectFromGroup(
 
 /**
  * Resolve the workspace directory from OpenClaw config.
- * Checks agents.defaults.workspace, then falls back to ~/.openclaw/workspace-devclaw.
+ * Checks agents.defaults.workspace, then falls back to ~/.openclaw/workspace-vibeclawcoder.
  */
 function resolveWorkspaceDir(config: Record<string, unknown>): string | null {
   const agents = config.agents as { defaults?: { workspace?: string }; list?: Array<{ id: string; workspace?: string }> } | undefined;
   if (agents?.defaults?.workspace) return agents.defaults.workspace;
-  const devclaw = agents?.list?.find((a) => a.id === "devclaw");
-  if (devclaw?.workspace) return devclaw.workspace;
-  return path.join(homedir(), ".openclaw", "workspace-devclaw");
+  const vibeclawcoder = agents?.list?.find((a) => a.id === "vibeclawcoder");
+  if (vibeclawcoder?.workspace) return vibeclawcoder.workspace;
+  return path.join(homedir(), ".openclaw", "workspace-vibeclawcoder");
 }
 
 /**

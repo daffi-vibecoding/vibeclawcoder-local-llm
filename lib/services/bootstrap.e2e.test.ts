@@ -200,7 +200,7 @@ describe("E2E bootstrap — agent:bootstrap hook (AGENTS.md stripping)", () => {
     if (h) await h.cleanup();
   });
 
-  it("should strip AGENTS.md for DevClaw worker sessions", async () => {
+  it("should strip AGENTS.md for VibeClawCoder worker sessions", async () => {
     h = await createTestHarness({ projectName: "my-app" });
 
     const result = await h.simulateBootstrap(
@@ -209,7 +209,7 @@ describe("E2E bootstrap — agent:bootstrap hook (AGENTS.md stripping)", () => {
     assert.strictEqual(result.agentsMdStripped, true);
   });
 
-  it("should NOT strip AGENTS.md for non-DevClaw sessions", async () => {
+  it("should NOT strip AGENTS.md for non-VibeClawCoder sessions", async () => {
     h = await createTestHarness();
 
     const result = await h.simulateBootstrap("agent:main:orchestrator");

@@ -2,7 +2,7 @@
 
 ## Core loops
 1. 5-minute controller loop (`scripts/run-loop.mjs`): fills developer lanes from `To Do`.
-2. Default DevClaw GitHub flow handles live commit/PR/review lifecycle per task.
+2. Default VibeClawCoder GitHub flow handles live commit/PR/review lifecycle per task.
 3. 20-minute ticker (`scripts/run-ticker.mjs`): status-only reporting.
 
 ## Model policy

@@ -26,10 +26,10 @@ function loadDefault(filename: string, fallback = ""): string {
 // Role prompts — defaults/developer.md, defaults/tester.md, etc.
 // ---------------------------------------------------------------------------
 
-export const DEFAULT_DEV_INSTRUCTIONS = loadDefault("devclaw/prompts/developer.md", "# DEVELOPER Worker Instructions\n\nAdd role-specific instructions here.\n");
-export const DEFAULT_QA_INSTRUCTIONS = loadDefault("devclaw/prompts/tester.md", "# TESTER Worker Instructions\n\nAdd role-specific instructions here.\n");
-export const DEFAULT_ARCHITECT_INSTRUCTIONS = loadDefault("devclaw/prompts/architect.md", "# ARCHITECT Worker Instructions\n\nAdd role-specific instructions here.\n");
-export const DEFAULT_REVIEWER_INSTRUCTIONS = loadDefault("devclaw/prompts/reviewer.md", "# REVIEWER Worker Instructions\n\nAdd role-specific instructions here.\n");
+export const DEFAULT_DEV_INSTRUCTIONS = loadDefault("vibeclawcoder/prompts/developer.md", "# DEVELOPER Worker Instructions\n\nAdd role-specific instructions here.\n");
+export const DEFAULT_QA_INSTRUCTIONS = loadDefault("vibeclawcoder/prompts/tester.md", "# TESTER Worker Instructions\n\nAdd role-specific instructions here.\n");
+export const DEFAULT_ARCHITECT_INSTRUCTIONS = loadDefault("vibeclawcoder/prompts/architect.md", "# ARCHITECT Worker Instructions\n\nAdd role-specific instructions here.\n");
+export const DEFAULT_REVIEWER_INSTRUCTIONS = loadDefault("vibeclawcoder/prompts/reviewer.md", "# REVIEWER Worker Instructions\n\nAdd role-specific instructions here.\n");
 
 /** Default role instructions indexed by role ID. Used by project scaffolding. */
 export const DEFAULT_ROLE_INSTRUCTIONS: Record<string, string> = {
@@ -53,4 +53,4 @@ export const TOOLS_MD_TEMPLATE = loadDefault("TOOLS.md");
 // Workflow YAML — roles generated from registry + workflow section from file
 // ---------------------------------------------------------------------------
 
-export const WORKFLOW_YAML_TEMPLATE = loadDefault("devclaw/workflow.yaml");
+export const WORKFLOW_YAML_TEMPLATE = loadDefault("vibeclawcoder/workflow.yaml");

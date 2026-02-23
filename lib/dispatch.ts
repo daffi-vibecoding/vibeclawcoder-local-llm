@@ -550,8 +550,8 @@ function sendToAgent(
   opts: { agentId?: string; projectName: string; issueId: number; role: string; level?: string; slotIndex?: number; orchestratorSessionKey?: string; workspaceDir: string; dispatchTimeoutMs?: number; extraSystemPrompt?: string },
 ): void {
   const gatewayParams = JSON.stringify({
-    idempotencyKey: `devclaw-${opts.projectName}-${opts.issueId}-${opts.role}-${opts.level ?? "unknown"}-${opts.slotIndex ?? 0}-${sessionKey}`,
-    agentId: opts.agentId ?? "devclaw",
+    idempotencyKey: `vibeclawcoder-${opts.projectName}-${opts.issueId}-${opts.role}-${opts.level ?? "unknown"}-${opts.slotIndex ?? 0}-${sessionKey}`,
+    agentId: opts.agentId ?? "vibeclawcoder",
     sessionKey,
     message: taskMessage,
     deliver: false,

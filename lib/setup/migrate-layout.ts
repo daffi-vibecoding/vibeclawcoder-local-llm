@@ -1,25 +1,25 @@
 /**
  * setup/migrate-layout.ts — One-time workspace layout migration.
  *
- * Migrates from old layouts to the current devclaw/ data directory:
+ * Migrates from old layouts to the current vibeclawcoder/ data directory:
  *
  * Very old layout (pre-restructure):
- *   projects/projects.json          → devclaw/projects.json
- *   projects/config.yaml            → devclaw/workflow.yaml
- *   projects/roles/default/*        → devclaw/prompts/* (with dev.md→developer.md, qa.md→tester.md)
- *   projects/roles/<project>/*      → devclaw/projects/<project>/prompts/*
- *   projects/<project>/config.yaml  → devclaw/projects/<project>/workflow.yaml
+ *   projects/projects.json          → vibeclawcoder/projects.json
+ *   projects/config.yaml            → vibeclawcoder/workflow.yaml
+ *   projects/roles/default/*        → vibeclawcoder/prompts/* (with dev.md→developer.md, qa.md→tester.md)
+ *   projects/roles/<project>/*      → vibeclawcoder/projects/<project>/prompts/*
+ *   projects/<project>/config.yaml  → vibeclawcoder/projects/<project>/workflow.yaml
  *
- * Intermediate layout (post-restructure, pre-devclaw/):
- *   projects.json                   → devclaw/projects.json
- *   workflow.yaml                   → devclaw/workflow.yaml
- *   prompts/*                       → devclaw/prompts/*
- *   projects/<project>/*.md         → devclaw/projects/<project>/prompts/*
- *   projects/<project>/workflow.yaml→ devclaw/projects/<project>/workflow.yaml
- *   log/*                           → devclaw/log/*
+ * Intermediate layout (post-restructure, pre-vibeclawcoder/):
+ *   projects.json                   → vibeclawcoder/projects.json
+ *   workflow.yaml                   → vibeclawcoder/workflow.yaml
+ *   prompts/*                       → vibeclawcoder/prompts/*
+ *   projects/<project>/*.md         → vibeclawcoder/projects/<project>/prompts/*
+ *   projects/<project>/workflow.yaml→ vibeclawcoder/projects/<project>/workflow.yaml
+ *   log/*                           → vibeclawcoder/log/*
  *
- * Flat project layout (early devclaw/ without prompts subdir):
- *   devclaw/projects/<project>/*.md → devclaw/projects/<project>/prompts/*
+ * Flat project layout (early vibeclawcoder/ without prompts subdir):
+ *   vibeclawcoder/projects/<project>/*.md → vibeclawcoder/projects/<project>/prompts/*
  *
  * This file can be removed once all workspaces have been migrated.
  */
@@ -33,7 +33,7 @@ const ROLE_FILE_RENAMES: Record<string, string> = {
 };
 
 /** The data directory name inside the workspace. */
-export const DATA_DIR = "devclaw";
+export const DATA_DIR = "vibeclawcoder";
 
 /** Track which workspaces have been migrated this process. */
 const migrated = new Set<string>();
@@ -52,12 +52,12 @@ export async function ensureWorkspaceMigrated(workspaceDir: string): Promise<voi
 }
 
 /**
- * Migrate workspace from old layouts to new devclaw/ data directory.
+ * Migrate workspace from old layouts to new vibeclawcoder/ data directory.
  *
  * Detects four states:
- * 1. Already migrated: devclaw/projects.json exists → check prompt subdir migration
- * 2. Intermediate layout: projects.json at workspace root → move into devclaw/
- * 3. Very old layout: projects/projects.json → full migration into devclaw/
+ * 1. Already migrated: vibeclawcoder/projects.json exists → check prompt subdir migration
+ * 2. Intermediate layout: projects.json at workspace root → move into vibeclawcoder/
+ * 3. Very old layout: projects/projects.json → full migration into vibeclawcoder/
  * 4. Empty workspace → no-op
  */
 export async function migrateWorkspaceLayout(workspaceDir: string): Promise<void> {
@@ -70,7 +70,7 @@ export async function migrateWorkspaceLayout(workspaceDir: string): Promise<void
     return;
   }
 
-  // Check for intermediate layout (post-restructure, pre-devclaw/)
+  // Check for intermediate layout (post-restructure, pre-vibeclawcoder/)
   const rootProjectsJson = path.join(workspaceDir, "projects.json");
   if (await fileExists(rootProjectsJson)) {
     await migrateFromIntermediate(workspaceDir, dataDir);
@@ -87,7 +87,7 @@ export async function migrateWorkspaceLayout(workspaceDir: string): Promise<void
 
 /**
  * Move flat prompt files in project dirs into prompts/ subdirs.
- * Handles: devclaw/projects/<project>/<role>.md → devclaw/projects/<project>/prompts/<role>.md
+ * Handles: vibeclawcoder/projects/<project>/<role>.md → vibeclawcoder/projects/<project>/prompts/<role>.md
  */
 async function migratePromptSubdirs(dataDir: string): Promise<void> {
   const projectsDir = path.join(dataDir, "projects");
@@ -121,7 +121,7 @@ async function migratePromptSubdirs(dataDir: string): Promise<void> {
 }
 
 /**
- * Migrate from intermediate layout (files at workspace root) into devclaw/.
+ * Migrate from intermediate layout (files at workspace root) into vibeclawcoder/.
  */
 async function migrateFromIntermediate(workspaceDir: string, dataDir: string): Promise<void> {
   await fs.mkdir(dataDir, { recursive: true });
@@ -158,17 +158,17 @@ async function migrateFromIntermediate(workspaceDir: string, dataDir: string): P
 }
 
 /**
- * Migrate from very old layout (projects/projects.json) directly into devclaw/.
+ * Migrate from very old layout (projects/projects.json) directly into vibeclawcoder/.
  */
 async function migrateFromOldLayout(workspaceDir: string, dataDir: string): Promise<void> {
   await fs.mkdir(dataDir, { recursive: true });
 
-  // 1. Move projects/projects.json → devclaw/projects.json
+  // 1. Move projects/projects.json → vibeclawcoder/projects.json
   const oldProjectsJson = path.join(workspaceDir, "projects", "projects.json");
   await safeCopy(oldProjectsJson, path.join(dataDir, "projects.json"));
   await fs.unlink(oldProjectsJson);
 
-  // 2. Move projects/config.yaml → devclaw/workflow.yaml
+  // 2. Move projects/config.yaml → vibeclawcoder/workflow.yaml
   const oldConfig = path.join(workspaceDir, "projects", "config.yaml");
   const newConfig = path.join(dataDir, "workflow.yaml");
   if (await fileExists(oldConfig) && !await fileExists(newConfig)) {
@@ -176,7 +176,7 @@ async function migrateFromOldLayout(workspaceDir: string, dataDir: string): Prom
     await fs.unlink(oldConfig);
   }
 
-  // 3. Move projects/roles/default/* → devclaw/prompts/* (with renames)
+  // 3. Move projects/roles/default/* → vibeclawcoder/prompts/* (with renames)
   const oldDefaultsDir = path.join(workspaceDir, "projects", "roles", "default");
   const newPromptsDir = path.join(dataDir, "prompts");
   if (await dirExists(oldDefaultsDir)) {
@@ -193,7 +193,7 @@ async function migrateFromOldLayout(workspaceDir: string, dataDir: string): Prom
     await rmEmptyDir(oldDefaultsDir);
   }
 
-  // 4. Move projects/roles/<project>/* → devclaw/projects/<project>/prompts/* (with renames)
+  // 4. Move projects/roles/<project>/* → vibeclawcoder/projects/<project>/prompts/* (with renames)
   const oldRolesDir = path.join(workspaceDir, "projects", "roles");
   if (await dirExists(oldRolesDir)) {
     const entries = await fs.readdir(oldRolesDir, { withFileTypes: true });
@@ -218,7 +218,7 @@ async function migrateFromOldLayout(workspaceDir: string, dataDir: string): Prom
     await rmEmptyDir(oldRolesDir);
   }
 
-  // 5. Rename projects/<project>/config.yaml → devclaw/projects/<project>/workflow.yaml
+  // 5. Rename projects/<project>/config.yaml → vibeclawcoder/projects/<project>/workflow.yaml
   const oldProjectsDir = path.join(workspaceDir, "projects");
   if (await dirExists(oldProjectsDir)) {
     const entries = await fs.readdir(oldProjectsDir, { withFileTypes: true });

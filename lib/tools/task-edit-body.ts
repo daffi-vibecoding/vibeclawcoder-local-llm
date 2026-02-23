@@ -5,7 +5,7 @@
  * This prevents inadvertent edits to issues that are already in-progress.
  *
  * Provider (GitHub/GitLab) tracks revision history natively.
- * DevClaw adds an explicit audit entry with who, when, and what changed.
+ * VibeClawCoder adds an explicit audit entry with who, when, and what changed.
  * Optionally posts an auto-comment on the issue for traceability.
  */
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";

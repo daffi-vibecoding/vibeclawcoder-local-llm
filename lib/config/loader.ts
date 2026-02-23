@@ -3,8 +3,8 @@
  *
  * Resolution order:
  *   1. Built-in defaults (ROLE_REGISTRY + DEFAULT_WORKFLOW)
- *   2. Workspace: <workspace>/devclaw/workflow.yaml
- *   3. Project:   <workspace>/devclaw/projects/<project>/workflow.yaml
+ *   2. Workspace: <workspace>/vibeclawcoder/workflow.yaml
+ *   3. Project:   <workspace>/vibeclawcoder/projects/<project>/workflow.yaml
  *
  * Also supports legacy config.yaml and workflow.json for backward compat.
  */
@@ -14,12 +14,12 @@ import YAML from "yaml";
 import { ROLE_REGISTRY } from "../roles/registry.js";
 import { DEFAULT_WORKFLOW, type WorkflowConfig } from "../workflow.js";
 import { mergeConfig } from "./merge.js";
-import type { DevClawConfig, ResolvedConfig, ResolvedRoleConfig, ResolvedTimeouts, RoleOverride, ModelEntry } from "./types.js";
+import type { VibeClawCoderConfig, ResolvedConfig, ResolvedRoleConfig, ResolvedTimeouts, RoleOverride, ModelEntry } from "./types.js";
 import { validateConfig, validateWorkflowIntegrity } from "./schema.js";
 import { DATA_DIR } from "../setup/migrate-layout.js";
 
 /**
- * Load and resolve the full DevClaw config for a project.
+ * Load and resolve the full VibeClawCoder config for a project.
  *
  * Merges: built-in → workspace workflow.yaml → project workflow.yaml.
  */
@@ -33,7 +33,7 @@ export async function loadConfig(
   // Layer 1: built-in defaults
   const builtIn = buildDefaultConfig();
 
-  // Layer 2: workspace workflow.yaml (in devclaw/ data dir)
+  // Layer 2: workspace workflow.yaml (in vibeclawcoder/ data dir)
   let merged = builtIn;
   const workspaceConfig =
     await readWorkflowFile(dataDir) ??
@@ -74,7 +74,7 @@ export async function loadConfig(
 /**
  * Build the default config from the built-in ROLE_REGISTRY and DEFAULT_WORKFLOW.
  */
-function buildDefaultConfig(): DevClawConfig {
+function buildDefaultConfig(): VibeClawCoderConfig {
   const roles: Record<string, RoleOverride> = {};
   for (const [id, reg] of Object.entries(ROLE_REGISTRY)) {
     roles[id] = {
@@ -89,7 +89,7 @@ function buildDefaultConfig(): DevClawConfig {
 }
 
 /**
- * Resolve a merged DevClawConfig into a fully-typed ResolvedConfig.
+ * Resolve a merged VibeClawCoderConfig into a fully-typed ResolvedConfig.
  */
 /** Default max workers per level when no override is set. */
 const DEFAULT_MAX_WORKERS_PER_LEVEL = 2;
@@ -119,7 +119,7 @@ function resolveLevelMaxWorkers(
   return result;
 }
 
-function resolve(config: DevClawConfig): ResolvedConfig {
+function resolve(config: VibeClawCoderConfig): ResolvedConfig {
   const roles: Record<string, ResolvedRoleConfig> = {};
   const globalMaxWorkers = config.workflow?.maxWorkersPerLevel ?? DEFAULT_MAX_WORKERS_PER_LEVEL;
 
@@ -207,12 +207,12 @@ function resolve(config: DevClawConfig): ResolvedConfig {
 // ---------------------------------------------------------------------------
 
 /** Read workflow.yaml (new primary config file). Validates structure via Zod. */
-async function readWorkflowFile(dir: string): Promise<DevClawConfig | null> {
+async function readWorkflowFile(dir: string): Promise<VibeClawCoderConfig | null> {
   try {
     const content = await fs.readFile(path.join(dir, "workflow.yaml"), "utf-8");
     const parsed = YAML.parse(content);
     if (parsed) validateConfig(parsed);
-    return parsed as DevClawConfig;
+    return parsed as VibeClawCoderConfig;
   } catch (err: any) {
     if (err?.code === "ENOENT") return null;
     // Re-throw validation errors with file context
@@ -224,10 +224,10 @@ async function readWorkflowFile(dir: string): Promise<DevClawConfig | null> {
 }
 
 /** Read config.yaml (old name, fallback for unmigrated workspaces). */
-async function readLegacyConfigFile(dir: string): Promise<DevClawConfig | null> {
+async function readLegacyConfigFile(dir: string): Promise<VibeClawCoderConfig | null> {
   try {
     const content = await fs.readFile(path.join(dir, "config.yaml"), "utf-8");
-    return YAML.parse(content) as DevClawConfig;
+    return YAML.parse(content) as VibeClawCoderConfig;
   } catch { /* not found */ }
   return null;
 }

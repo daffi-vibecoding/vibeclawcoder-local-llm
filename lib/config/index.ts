@@ -1,10 +1,10 @@
 /**
- * config/ — Unified DevClaw configuration.
+ * config/ — Unified VibeClawCoder configuration.
  *
  * Single workflow.yaml per workspace/project combining roles, models, and workflow.
  */
 export type {
-  DevClawConfig,
+  VibeClawCoderConfig,
   RoleOverride,
   ResolvedConfig,
   ResolvedRoleConfig,

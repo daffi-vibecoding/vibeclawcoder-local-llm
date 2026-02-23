@@ -13,23 +13,23 @@ async function fileExists(p: string): Promise<boolean> {
   try { await fs.access(p); return true; } catch { return false; }
 }
 
-describe("migrateWorkspaceLayout — very old layout → devclaw/", () => {
-  it("should move projects/projects.json to devclaw/projects.json", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+describe("migrateWorkspaceLayout — very old layout → vibeclawcoder/", () => {
+  it("should move projects/projects.json to vibeclawcoder/projects.json", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     const projDir = path.join(tmpDir, "projects");
     await fs.mkdir(projDir, { recursive: true });
     await fs.writeFile(path.join(projDir, "projects.json"), '{"projects":{}}');
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "projects.json")), "projects.json should be at devclaw/");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "projects.json")), "projects.json should be at vibeclawcoder/");
     assert.ok(!await fileExists(path.join(projDir, "projects.json")), "old projects.json should be removed");
 
     await fs.rm(tmpDir, { recursive: true });
   });
 
-  it("should rename projects/config.yaml to devclaw/workflow.yaml", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+  it("should rename projects/config.yaml to vibeclawcoder/workflow.yaml", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     const projDir = path.join(tmpDir, "projects");
     await fs.mkdir(projDir, { recursive: true });
     await fs.writeFile(path.join(projDir, "projects.json"), '{"projects":{}}');
@@ -37,16 +37,16 @@ describe("migrateWorkspaceLayout — very old layout → devclaw/", () => {
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "workflow.yaml")), "workflow.yaml should be at devclaw/");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "workflow.yaml")), "workflow.yaml should be at vibeclawcoder/");
     assert.ok(!await fileExists(path.join(projDir, "config.yaml")), "old config.yaml should be removed");
-    const content = await fs.readFile(path.join(tmpDir, "devclaw", "workflow.yaml"), "utf-8");
+    const content = await fs.readFile(path.join(tmpDir, "vibeclawcoder", "workflow.yaml"), "utf-8");
     assert.ok(content.includes("defaultLevel: medior"), "content should be preserved");
 
     await fs.rm(tmpDir, { recursive: true });
   });
 
-  it("should move roles/default/* to devclaw/prompts/ with renames", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+  it("should move roles/default/* to vibeclawcoder/prompts/ with renames", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     const projDir = path.join(tmpDir, "projects");
     const defaultDir = path.join(projDir, "roles", "default");
     await fs.mkdir(defaultDir, { recursive: true });
@@ -57,11 +57,11 @@ describe("migrateWorkspaceLayout — very old layout → devclaw/", () => {
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "prompts", "developer.md")), "dev.md should become developer.md");
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "prompts", "tester.md")), "qa.md should become tester.md");
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "prompts", "architect.md")), "architect.md should stay");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "prompts", "developer.md")), "dev.md should become developer.md");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "prompts", "tester.md")), "qa.md should become tester.md");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "prompts", "architect.md")), "architect.md should stay");
 
-    const devContent = await fs.readFile(path.join(tmpDir, "devclaw", "prompts", "developer.md"), "utf-8");
+    const devContent = await fs.readFile(path.join(tmpDir, "vibeclawcoder", "prompts", "developer.md"), "utf-8");
     assert.strictEqual(devContent, "# Dev instructions");
 
     assert.ok(!await fileExists(defaultDir), "old default dir should be removed");
@@ -69,8 +69,8 @@ describe("migrateWorkspaceLayout — very old layout → devclaw/", () => {
     await fs.rm(tmpDir, { recursive: true });
   });
 
-  it("should move roles/<project>/* to devclaw/projects/<project>/prompts/ with renames", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+  it("should move roles/<project>/* to vibeclawcoder/projects/<project>/prompts/ with renames", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     const projDir = path.join(tmpDir, "projects");
     const roleDir = path.join(projDir, "roles", "my-app");
     await fs.mkdir(roleDir, { recursive: true });
@@ -81,18 +81,18 @@ describe("migrateWorkspaceLayout — very old layout → devclaw/", () => {
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "projects", "my-app", "prompts", "developer.md")), "dev.md should become prompts/developer.md");
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "projects", "my-app", "prompts", "tester.md")), "qa.md should become prompts/tester.md");
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "projects", "my-app", "prompts", "architect.md")), "architect.md should be in prompts/");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "projects", "my-app", "prompts", "developer.md")), "dev.md should become prompts/developer.md");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "projects", "my-app", "prompts", "tester.md")), "qa.md should become prompts/tester.md");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "projects", "my-app", "prompts", "architect.md")), "architect.md should be in prompts/");
 
-    const content = await fs.readFile(path.join(tmpDir, "devclaw", "projects", "my-app", "prompts", "developer.md"), "utf-8");
+    const content = await fs.readFile(path.join(tmpDir, "vibeclawcoder", "projects", "my-app", "prompts", "developer.md"), "utf-8");
     assert.strictEqual(content, "# My App Developer");
 
     await fs.rm(tmpDir, { recursive: true });
   });
 
-  it("should rename projects/<project>/config.yaml to devclaw/projects/<project>/workflow.yaml", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+  it("should rename projects/<project>/config.yaml to vibeclawcoder/projects/<project>/workflow.yaml", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     const projDir = path.join(tmpDir, "projects");
     const appDir = path.join(projDir, "my-app");
     await fs.mkdir(appDir, { recursive: true });
@@ -101,14 +101,14 @@ describe("migrateWorkspaceLayout — very old layout → devclaw/", () => {
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "projects", "my-app", "workflow.yaml")), "workflow.yaml should exist");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "projects", "my-app", "workflow.yaml")), "workflow.yaml should exist");
     assert.ok(!await fileExists(path.join(appDir, "config.yaml")), "old config.yaml should be removed");
 
     await fs.rm(tmpDir, { recursive: true });
   });
 
-  it("should move log/ to devclaw/log/", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+  it("should move log/ to vibeclawcoder/log/", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     const projDir = path.join(tmpDir, "projects");
     const logDir = path.join(tmpDir, "log");
     await fs.mkdir(projDir, { recursive: true });
@@ -118,41 +118,41 @@ describe("migrateWorkspaceLayout — very old layout → devclaw/", () => {
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "log", "audit.log")), "audit.log should be in devclaw/log/");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "log", "audit.log")), "audit.log should be in vibeclawcoder/log/");
     assert.ok(!await fileExists(path.join(logDir, "audit.log")), "old audit.log should be removed");
 
     await fs.rm(tmpDir, { recursive: true });
   });
 });
 
-describe("migrateWorkspaceLayout — intermediate layout → devclaw/", () => {
-  it("should move projects.json from root to devclaw/", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+describe("migrateWorkspaceLayout — intermediate layout → vibeclawcoder/", () => {
+  it("should move projects.json from root to vibeclawcoder/", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     await fs.writeFile(path.join(tmpDir, "projects.json"), '{"projects":{}}');
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "projects.json")), "projects.json should be in devclaw/");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "projects.json")), "projects.json should be in vibeclawcoder/");
     assert.ok(!await fileExists(path.join(tmpDir, "projects.json")), "root projects.json should be removed");
 
     await fs.rm(tmpDir, { recursive: true });
   });
 
-  it("should move workflow.yaml from root to devclaw/", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+  it("should move workflow.yaml from root to vibeclawcoder/", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     await fs.writeFile(path.join(tmpDir, "projects.json"), '{"projects":{}}');
     await fs.writeFile(path.join(tmpDir, "workflow.yaml"), "roles:\n  dev:\n    defaultLevel: medior\n");
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "workflow.yaml")), "workflow.yaml should be in devclaw/");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "workflow.yaml")), "workflow.yaml should be in vibeclawcoder/");
     assert.ok(!await fileExists(path.join(tmpDir, "workflow.yaml")), "root workflow.yaml should be removed");
 
     await fs.rm(tmpDir, { recursive: true });
   });
 
-  it("should move prompts/ from root to devclaw/prompts/", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+  it("should move prompts/ from root to vibeclawcoder/prompts/", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     const promptsDir = path.join(tmpDir, "prompts");
     await fs.mkdir(promptsDir, { recursive: true });
     await fs.writeFile(path.join(tmpDir, "projects.json"), '{"projects":{}}');
@@ -160,14 +160,14 @@ describe("migrateWorkspaceLayout — intermediate layout → devclaw/", () => {
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "prompts", "developer.md")), "developer.md should be in devclaw/prompts/");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "prompts", "developer.md")), "developer.md should be in vibeclawcoder/prompts/");
     assert.ok(!await fileExists(path.join(promptsDir, "developer.md")), "old prompts/developer.md should be removed");
 
     await fs.rm(tmpDir, { recursive: true });
   });
 
   it("should move project .md files into prompts/ subdir", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     const projectDir = path.join(tmpDir, "projects", "my-app");
     await fs.mkdir(projectDir, { recursive: true });
     await fs.writeFile(path.join(tmpDir, "projects.json"), '{"projects":{}}');
@@ -176,14 +176,14 @@ describe("migrateWorkspaceLayout — intermediate layout → devclaw/", () => {
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "projects", "my-app", "prompts", "developer.md")), "developer.md should be in prompts/ subdir");
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "projects", "my-app", "workflow.yaml")), "workflow.yaml should stay at project root");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "projects", "my-app", "prompts", "developer.md")), "developer.md should be in prompts/ subdir");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "projects", "my-app", "workflow.yaml")), "workflow.yaml should stay at project root");
 
     await fs.rm(tmpDir, { recursive: true });
   });
 
   it("should rename old role files (dev.md, qa.md) in prompts/", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     const promptsDir = path.join(tmpDir, "prompts");
     await fs.mkdir(promptsDir, { recursive: true });
     await fs.writeFile(path.join(tmpDir, "projects.json"), '{"projects":{}}');
@@ -192,14 +192,14 @@ describe("migrateWorkspaceLayout — intermediate layout → devclaw/", () => {
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "prompts", "developer.md")), "dev.md should become developer.md");
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "prompts", "tester.md")), "qa.md should become tester.md");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "prompts", "developer.md")), "dev.md should become developer.md");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "prompts", "tester.md")), "qa.md should become tester.md");
 
     await fs.rm(tmpDir, { recursive: true });
   });
 
   it("should rename old role files in project prompts/", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     const projectDir = path.join(tmpDir, "projects", "my-app");
     await fs.mkdir(projectDir, { recursive: true });
     await fs.writeFile(path.join(tmpDir, "projects.json"), '{"projects":{}}');
@@ -208,14 +208,14 @@ describe("migrateWorkspaceLayout — intermediate layout → devclaw/", () => {
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "projects", "my-app", "prompts", "developer.md")), "dev.md should become prompts/developer.md");
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "projects", "my-app", "prompts", "tester.md")), "qa.md should become prompts/tester.md");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "projects", "my-app", "prompts", "developer.md")), "dev.md should become prompts/developer.md");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "projects", "my-app", "prompts", "tester.md")), "qa.md should become prompts/tester.md");
 
     await fs.rm(tmpDir, { recursive: true });
   });
 
-  it("should move log/ from root to devclaw/log/", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+  it("should move log/ from root to vibeclawcoder/log/", async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
     const logDir = path.join(tmpDir, "log");
     await fs.mkdir(logDir, { recursive: true });
     await fs.writeFile(path.join(tmpDir, "projects.json"), '{"projects":{}}');
@@ -223,7 +223,7 @@ describe("migrateWorkspaceLayout — intermediate layout → devclaw/", () => {
 
     await migrateWorkspaceLayout(tmpDir);
 
-    assert.ok(await fileExists(path.join(tmpDir, "devclaw", "log", "audit.log")), "audit.log should be in devclaw/log/");
+    assert.ok(await fileExists(path.join(tmpDir, "vibeclawcoder", "log", "audit.log")), "audit.log should be in vibeclawcoder/log/");
     assert.ok(!await fileExists(path.join(logDir, "audit.log")), "old log/audit.log should be removed");
 
     await fs.rm(tmpDir, { recursive: true });
@@ -232,8 +232,8 @@ describe("migrateWorkspaceLayout — intermediate layout → devclaw/", () => {
 
 describe("migrateWorkspaceLayout — flat project prompts → prompts/ subdir", () => {
   it("should move flat .md files into prompts/ subdir", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
-    const dataDir = path.join(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
+    const dataDir = path.join(tmpDir, "vibeclawcoder");
     const projectDir = path.join(dataDir, "projects", "my-app");
     await fs.mkdir(projectDir, { recursive: true });
     await fs.writeFile(path.join(dataDir, "projects.json"), '{"projects":{}}');
@@ -252,8 +252,8 @@ describe("migrateWorkspaceLayout — flat project prompts → prompts/ subdir", 
   });
 
   it("should rename old role files during subdir migration", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
-    const dataDir = path.join(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
+    const dataDir = path.join(tmpDir, "vibeclawcoder");
     const projectDir = path.join(dataDir, "projects", "my-app");
     await fs.mkdir(projectDir, { recursive: true });
     await fs.writeFile(path.join(dataDir, "projects.json"), '{"projects":{}}');
@@ -269,8 +269,8 @@ describe("migrateWorkspaceLayout — flat project prompts → prompts/ subdir", 
   });
 
   it("should skip projects that already have prompts/ subdir", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
-    const dataDir = path.join(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
+    const dataDir = path.join(tmpDir, "vibeclawcoder");
     const projectDir = path.join(dataDir, "projects", "my-app");
     const promptsDir = path.join(projectDir, "prompts");
     await fs.mkdir(promptsDir, { recursive: true });
@@ -288,8 +288,8 @@ describe("migrateWorkspaceLayout — flat project prompts → prompts/ subdir", 
 
 describe("migrateWorkspaceLayout — no-op cases", () => {
   it("should no-op when already fully migrated", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
-    const dataDir = path.join(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
+    const dataDir = path.join(tmpDir, "vibeclawcoder");
     const promptsDir = path.join(dataDir, "projects", "app", "prompts");
     await fs.mkdir(promptsDir, { recursive: true });
     await fs.writeFile(path.join(dataDir, "projects.json"), '{"projects":{}}');
@@ -303,7 +303,7 @@ describe("migrateWorkspaceLayout — no-op cases", () => {
   });
 
   it("should no-op when workspace is empty", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-migrate-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-migrate-"));
 
     await migrateWorkspaceLayout(tmpDir);
 

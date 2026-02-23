@@ -1,5 +1,5 @@
 /**
- * cli.ts — CLI registration for `openclaw devclaw setup` and `openclaw devclaw heartbeat`.
+ * cli.ts — CLI registration for `openclaw vibeclawcoder setup` and `openclaw vibeclawcoder heartbeat`.
  *
  * Uses Commander.js (provided by OpenClaw plugin SDK context).
  */
@@ -9,16 +9,16 @@ import { runSetup } from "./setup/index.js";
 import { getAllDefaultModels, getAllRoleIds, getLevelsForRole } from "./roles/index.js";
 
 /**
- * Register the `devclaw` CLI command group on a Commander program.
+ * Register the `vibeclawcoder` CLI command group on a Commander program.
  */
 export function registerCli(program: Command, api: OpenClawPluginApi): void {
-  const devclaw = program
-    .command("devclaw")
-    .description("DevClaw development pipeline tools");
+  const vibeclawcoder = program
+    .command("vibeclawcoder")
+    .description("VibeClawCoder development pipeline tools");
 
-  const setupCmd = devclaw
+  const setupCmd = vibeclawcoder
     .command("setup")
-    .description("Set up DevClaw: create agent, configure models, write workspace files")
+    .description("Set up VibeClawCoder: create agent, configure models, write workspace files")
     .option("--new-agent <name>", "Create a new agent with this name")
     .option("--agent <id>", "Use an existing agent by ID")
     .option("--workspace <path>", "Direct workspace path");

@@ -1,7 +1,7 @@
 {
   "name": "@daffi-vibecoding/vibeclawcoder",
   "version": "1.0.5",
-  "description": "Local-first fork of DevClaw for lightweight OpenClaw coding orchestration",
+  "description": "Local-first fork of VibeClawCoder for lightweight OpenClaw coding orchestration",
   "type": "module",
   "license": "MIT",
   "author": "daffi-vibecoding",

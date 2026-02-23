@@ -9,7 +9,7 @@
  *   4. Write the new version stamp
  *
  * Customization detection: a hash manifest (.prompt-hashes.json) tracks what
- * DevClaw last wrote. On upgrade, if the file hash matches the manifest →
+ * VibeClawCoder last wrote. On upgrade, if the file hash matches the manifest →
  * safe to overwrite. If it differs → user customized it → skip + warn.
  * If no manifest exists (first smart upgrade) → force-overwrite all + write manifest.
  *

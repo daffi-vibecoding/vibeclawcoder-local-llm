@@ -111,7 +111,7 @@ export interface IssueProvider {
    */
   /**
    * Add an emoji reaction to the issue body itself (not a comment).
-   * Used to mark issues as "managed by DevClaw" — presence of 👀 on the
+   * Used to mark issues as "managed by VibeClawCoder" — presence of 👀 on the
    * issue body distinguishes new-style issues from legacy ones.
    * Best-effort — implementations should not throw.
    */
@@ -160,7 +160,7 @@ export interface IssueProvider {
    * Upload a file attachment and return a public URL for embedding in issues.
    * Returns null if the provider doesn't support uploads or the upload fails.
    *
-   * GitHub: commits file to a `devclaw-attachments` branch, returns raw URL.
+   * GitHub: commits file to a `vibeclawcoder-attachments` branch, returns raw URL.
    * GitLab: uses the native project uploads API.
    */
   uploadAttachment(issueId: number, file: {

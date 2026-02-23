@@ -1,5 +1,5 @@
 /**
- * config/schema.ts — Zod validation for DevClaw workflow config.
+ * config/schema.ts — Zod validation for VibeClawCoder workflow config.
  *
  * Validates workflow YAML at load time with clear error messages.
  * Enforces: transition targets exist, queue states have roles,
@@ -72,7 +72,7 @@ const InstanceConfigSchema = z.object({
   name: z.string().optional(),
 }).optional();
 
-export const DevClawConfigSchema = z.object({
+export const VibeClawCoderConfigSchema = z.object({
   roles: z.record(z.string(), RoleOverrideSchema).optional(),
   workflow: WorkflowConfigSchema.partial().optional(),
   timeouts: TimeoutConfigSchema,
@@ -84,7 +84,7 @@ export const DevClawConfigSchema = z.object({
  * Returns the validated config or throws with a descriptive error.
  */
 export function validateConfig(raw: unknown): void {
-  DevClawConfigSchema.parse(raw);
+  VibeClawCoderConfigSchema.parse(raw);
 }
 
 /**

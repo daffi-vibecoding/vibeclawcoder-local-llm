@@ -526,7 +526,7 @@ export class GitLabProvider implements IssueProvider {
       const os = await import("node:os");
       const fs = await import("node:fs/promises");
       const path = await import("node:path");
-      const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-upload-"));
+      const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-upload-"));
       const tmpFile = path.join(tmpDir, file.filename);
       await fs.writeFile(tmpFile, file.buffer);
 

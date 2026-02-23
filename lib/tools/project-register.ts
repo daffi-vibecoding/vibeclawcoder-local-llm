@@ -1,5 +1,5 @@
 /**
- * project_register — Register a new project with DevClaw.
+ * project_register — Register a new project with VibeClawCoder.
  *
  * Atomically: validates repo, detects GitHub/GitLab provider, creates all 8 state labels (idempotent),
  * adds project entry to projects.json, and logs the event.
@@ -46,17 +46,17 @@ To override default worker instructions, create \`prompts/<role>.md\`:
 Available roles: ${roles}
 
 Example: \`prompts/developer.md\` overrides the default developer instructions for this project only.
-Files here take priority over the workspace defaults in \`devclaw/prompts/\`.
+Files here take priority over the workspace defaults in \`vibeclawcoder/prompts/\`.
 
 ## Workflow Overrides
 
 To override the default workflow configuration, create \`workflow.yaml\` in this directory.
 
-Only include the keys you want to override — everything else inherits from the workspace-level \`devclaw/workflow.yaml\`. The three-layer system is:
+Only include the keys you want to override — everything else inherits from the workspace-level \`vibeclawcoder/workflow.yaml\`. The three-layer system is:
 
 1. **Built-in defaults** (code)
-2. **Workspace** — \`devclaw/workflow.yaml\`
-3. **Project** — \`devclaw/projects/${projectName}/workflow.yaml\` (this directory)
+2. **Workspace** — \`vibeclawcoder/workflow.yaml\`
+3. **Project** — \`vibeclawcoder/projects/${projectName}/workflow.yaml\` (this directory)
 
 Example — use a different review policy for this project:
 
@@ -84,7 +84,7 @@ export function createProjectRegisterTool() {
   return (ctx: ToolContext) => ({
     name: "project_register",
     label: "Project Register",
-    description: `Register a new project with DevClaw. Creates state labels, adds to projects.json. One-time setup per project.`,
+    description: `Register a new project with VibeClawCoder. Creates state labels, adds to projects.json. One-time setup per project.`,
     parameters: {
       type: "object",
       required: ["projectGroupId", "name", "repo", "baseBranch"],

@@ -1,5 +1,5 @@
 /**
- * config/types.ts — Types for the unified DevClaw configuration.
+ * config/types.ts — Types for the unified VibeClawCoder configuration.
  *
  * A single workflow.yaml combines roles, models, and workflow.
  * Three-layer resolution: built-in → workspace → per-project.
@@ -48,7 +48,7 @@ export type InstanceConfig = {
  * The full workflow.yaml shape.
  * All fields optional — missing fields inherit from the layer below.
  */
-export type DevClawConfig = {
+export type VibeClawCoderConfig = {
   roles?: Record<string, RoleOverride | false>;
   workflow?: Partial<WorkflowConfig>;
   timeouts?: TimeoutConfig;

@@ -9,10 +9,10 @@ import { HEARTBEAT_DEFAULTS } from "../services/heartbeat.js";
 import type { ExecutionMode } from "../workflow.js";
 
 /**
- * Write DevClaw plugin config to openclaw.json plugins section.
+ * Write VibeClawCoder plugin config to openclaw.json plugins section.
  *
  * Configures:
- * - Tool restrictions (deny sessions_spawn, sessions_send) for DevClaw agents
+ * - Tool restrictions (deny sessions_spawn, sessions_send) for VibeClawCoder agents
  * - Subagent cleanup interval (30 days) to keep development sessions alive
  * - Heartbeat defaults
  *
@@ -29,11 +29,11 @@ export async function writePluginConfig(
   ensurePluginStructure(config);
 
   if (projectExecution) {
-    (config as any).plugins.entries.devclaw.config.projectExecution = projectExecution;
+    (config as any).plugins.entries.vibeclawcoder.config.projectExecution = projectExecution;
   }
 
   // Clean up legacy models from openclaw.json (moved to workflow.yaml)
-  delete (config as any).plugins.entries.devclaw.config.models;
+  delete (config as any).plugins.entries.vibeclawcoder.config.models;
 
   ensureInternalHooks(config);
   ensureHeartbeatDefaults(config);
@@ -56,9 +56,9 @@ function ensurePluginStructure(config: Record<string, unknown>): void {
   const plugins = config.plugins as Record<string, unknown>;
   if (!plugins.entries) plugins.entries = {};
   const entries = plugins.entries as Record<string, unknown>;
-  if (!entries.devclaw) entries.devclaw = {};
-  const devclaw = entries.devclaw as Record<string, unknown>;
-  if (!devclaw.config) devclaw.config = {};
+  if (!entries.vibeclawcoder) entries.vibeclawcoder = {};
+  const vibeclawcoder = entries.vibeclawcoder as Record<string, unknown>;
+  if (!vibeclawcoder.config) vibeclawcoder.config = {};
 }
 
 function configureSubagentCleanup(config: Record<string, unknown>): void {
@@ -87,9 +87,9 @@ function ensureInternalHooks(config: Record<string, unknown>): void {
 }
 
 function ensureHeartbeatDefaults(config: Record<string, unknown>): void {
-  const devclaw = (config as any).plugins.entries.devclaw.config;
-  if (!devclaw.work_heartbeat) {
-    devclaw.work_heartbeat = { ...HEARTBEAT_DEFAULTS };
+  const vibeclawcoder = (config as any).plugins.entries.vibeclawcoder.config;
+  if (!vibeclawcoder.work_heartbeat) {
+    vibeclawcoder.work_heartbeat = { ...HEARTBEAT_DEFAULTS };
   }
 }
 

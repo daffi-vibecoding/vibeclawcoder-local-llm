@@ -1,7 +1,7 @@
 /**
  * autoconfigure-models.ts — Tool for automatically configuring model assignments.
  *
- * Queries available authenticated models and intelligently assigns them to DevClaw roles.
+ * Queries available authenticated models and intelligently assigns them to VibeClawCoder roles.
  */
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { jsonResult } from "openclaw/plugin-sdk";
@@ -46,7 +46,7 @@ export function createAutoConfigureModelsTool(api: OpenClawPluginApi) {
     name: "autoconfigure_models",
     label: "Auto-Configure Models",
     description:
-      "Automatically discover authenticated models and intelligently assign them to DevClaw roles based on capability tiers",
+      "Automatically discover authenticated models and intelligently assign them to VibeClawCoder roles based on capability tiers",
     parameters: {
       type: "object",
       properties: {

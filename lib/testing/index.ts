@@ -1,5 +1,5 @@
 /**
- * testing/ — Test infrastructure for DevClaw integration tests.
+ * testing/ — Test infrastructure for VibeClawCoder integration tests.
  *
  * Exports:
  * - TestProvider: In-memory IssueProvider with call tracking

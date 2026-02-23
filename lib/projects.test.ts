@@ -23,7 +23,7 @@ import {
 
 describe("readProjects migration", () => {
   it("should migrate old format (dev/qa/architect fields) to per-level workers", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-proj-"));
     const projDir = path.join(tmpDir, "projects");
     await fs.mkdir(projDir, { recursive: true });
 
@@ -70,7 +70,7 @@ describe("readProjects migration", () => {
   });
 
   it("should migrate old level names in old format", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-"));
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-proj-"));
     const projDir = path.join(tmpDir, "projects");
     await fs.mkdir(projDir, { recursive: true });
 
@@ -106,8 +106,8 @@ describe("readProjects migration", () => {
   });
 
   it("should read legacy workers-map format and migrate to per-level", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-"));
-    const dataDir = path.join(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-proj-"));
+    const dataDir = path.join(tmpDir, "vibeclawcoder");
     await fs.mkdir(dataDir, { recursive: true });
 
     // Old workers-map format (flat WorkerState, no slots)
@@ -142,8 +142,8 @@ describe("readProjects migration", () => {
   });
 
   it("should read old slot-based format and migrate to per-level", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-"));
-    const dataDir = path.join(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-proj-"));
+    const dataDir = path.join(tmpDir, "vibeclawcoder");
     await fs.mkdir(dataDir, { recursive: true });
 
     const slotFormat = {
@@ -184,8 +184,8 @@ describe("readProjects migration", () => {
   });
 
   it("should read new per-level format correctly", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-"));
-    const dataDir = path.join(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-proj-"));
+    const dataDir = path.join(tmpDir, "vibeclawcoder");
     await fs.mkdir(dataDir, { recursive: true });
 
     const levelFormat = {
@@ -227,8 +227,8 @@ describe("readProjects migration", () => {
   });
 
   it("should migrate old worker keys in workers-map format", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-"));
-    const dataDir = path.join(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-proj-"));
+    const dataDir = path.join(tmpDir, "vibeclawcoder");
     await fs.mkdir(dataDir, { recursive: true });
 
     const mixedFormat = {
@@ -324,8 +324,8 @@ describe("per-level slot helpers", () => {
 
 describe("writeProjects round-trip", () => {
   it("should preserve per-level workers through write/read cycle", async () => {
-    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "devclaw-proj-"));
-    const dataDir = path.join(tmpDir, "devclaw");
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibeclawcoder-proj-"));
+    const dataDir = path.join(tmpDir, "vibeclawcoder");
     await fs.mkdir(dataDir, { recursive: true });
 
     const data: ProjectsData = {

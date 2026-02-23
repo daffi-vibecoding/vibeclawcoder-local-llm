@@ -1,7 +1,7 @@
 /**
  * llm-model-selector.ts — LLM-powered intelligent model selection.
  *
- * Uses an LLM to understand model capabilities and assign optimal models to DevClaw roles.
+ * Uses an LLM to understand model capabilities and assign optimal models to VibeClawCoder roles.
  */
 import type { runCommand } from "../run-command.js";
 import { ROLE_REGISTRY } from "../roles/index.js";
@@ -68,7 +68,7 @@ function validateAssignment(
 }
 
 /**
- * Use an LLM to intelligently select and assign models to DevClaw roles.
+ * Use an LLM to intelligently select and assign models to VibeClawCoder roles.
  */
 export async function selectModelsWithLLM(
   availableModels: Array<{ model: string; provider: string }>,
@@ -88,7 +88,7 @@ export async function selectModelsWithLLM(
   const modelList = availableModels.map((m) => m.model).join("\n");
   const jsonExample = buildJsonExample();
 
-  const prompt = `You are an AI model expert. Analyze the following authenticated AI models and assign them to DevClaw development roles based on their capabilities.
+  const prompt = `You are an AI model expert. Analyze the following authenticated AI models and assign them to VibeClawCoder development roles based on their capabilities.
 
 Available models:
 ${modelList}
@@ -110,7 +110,7 @@ Return ONLY a JSON object in this exact format (no markdown, no explanation):
 ${jsonExample}`;
 
   try {
-    const sessionId = "devclaw-model-selection";
+    const sessionId = "vibeclawcoder-model-selection";
 
     if (!execCommand) {
       throw new Error("execCommand is required for LLM model selection");

@@ -1,5 +1,5 @@
 /**
- * bootstrap-hook.ts — Bootstrap support for DevClaw worker sessions.
+ * bootstrap-hook.ts — Bootstrap support for VibeClawCoder worker sessions.
  *
  * Provides:
  *   1. agent:bootstrap (internal hook) — replaces the orchestrator's AGENTS.md
@@ -16,19 +16,19 @@ import { getSessionKeyRolePattern } from "./roles/index.js";
 import { DATA_DIR } from "./setup/migrate-layout.js";
 
 /**
- * Parse a DevClaw subagent session key to extract project name and role.
+ * Parse a VibeClawCoder subagent session key to extract project name and role.
  *
  * Session key format (named): `agent:{agentId}:subagent:{projectName}-{role}-{level}-{name}` (name is lowercase)
  * Session key format (numeric): `agent:{agentId}:subagent:{projectName}-{role}-{level}-{slotIndex}`
  * Session key format (legacy): `agent:{agentId}:subagent:{projectName}-{role}-{level}`
  * Examples:
- *   - `agent:devclaw:subagent:my-project-developer-medior-ada`  → { projectName: "my-project", role: "developer" }
- *   - `agent:devclaw:subagent:my-project-developer-medior-0`    → { projectName: "my-project", role: "developer" }
- *   - `agent:devclaw:subagent:webapp-tester-medior`              → { projectName: "webapp", role: "tester" } (legacy)
+ *   - `agent:vibeclawcoder:subagent:my-project-developer-medior-ada`  → { projectName: "my-project", role: "developer" }
+ *   - `agent:vibeclawcoder:subagent:my-project-developer-medior-0`    → { projectName: "my-project", role: "developer" }
+ *   - `agent:vibeclawcoder:subagent:webapp-tester-medior`              → { projectName: "webapp", role: "tester" } (legacy)
  *
  * Note: projectName may contain hyphens, so we match role from the end.
  */
-export function parseDevClawSessionKey(
+export function parseVibeClawCoderSessionKey(
   sessionKey: string,
 ): { projectName: string; role: string } | null {
   const rolePattern = getSessionKeyRolePattern();
@@ -60,9 +60,9 @@ export type RoleInstructionsResult = {
  * Returns both the content and the source path for logging/traceability.
  *
  * Resolution order:
- *   1. devclaw/projects/<project>/prompts/<role>.md  (project-specific)
+ *   1. vibeclawcoder/projects/<project>/prompts/<role>.md  (project-specific)
  *   2. projects/roles/<project>/<role>.md             (old project-specific)
- *   3. devclaw/prompts/<role>.md                      (workspace default)
+ *   3. vibeclawcoder/prompts/<role>.md                      (workspace default)
  *   4. projects/roles/default/<role>.md               (old default)
  */
 export async function loadRoleInstructions(
@@ -106,7 +106,7 @@ export async function loadRoleInstructions(
 }
 
 /**
- * Register the agent:bootstrap hook for DevClaw worker sessions.
+ * Register the agent:bootstrap hook for VibeClawCoder worker sessions.
  *
  * Replaces the orchestrator's AGENTS.md with role-specific instructions
  * loaded from the workspace. This ensures workers see their own prompt on
@@ -125,7 +125,7 @@ export function registerBootstrapHook(api: OpenClawPluginApi): void {
       const sessionKey = event.sessionKey;
       if (!sessionKey) return;
 
-      const parsed = parseDevClawSessionKey(sessionKey);
+      const parsed = parseVibeClawCoderSessionKey(sessionKey);
       if (!parsed) return;
 
       const context = event.context as {
@@ -177,9 +177,9 @@ export function registerBootstrapHook(api: OpenClawPluginApi): void {
       }
     },
     {
-      name: "devclaw-bootstrap-role-instructions",
+      name: "vibeclawcoder-bootstrap-role-instructions",
       description:
-        "Replaces orchestrator AGENTS.md with role-specific instructions for DevClaw workers",
+        "Replaces orchestrator AGENTS.md with role-specific instructions for VibeClawCoder workers",
     } as any,
   );
 }

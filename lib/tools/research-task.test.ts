@@ -4,7 +4,7 @@
  */
 import { describe, it } from "node:test";
 import assert from "node:assert";
-import { parseDevClawSessionKey } from "../bootstrap-hook.js";
+import { parseVibeClawCoderSessionKey } from "../bootstrap-hook.js";
 import { isLevelForRole, roleForLevel, resolveModel, getDefaultModel, getEmoji } from "../roles/index.js";
 import { selectLevel } from "../model-selector.js";
 import {
@@ -117,12 +117,12 @@ describe("architect model selection", () => {
 
 describe("architect session key parsing", () => {
   it("should parse architect session key", () => {
-    const result = parseDevClawSessionKey("agent:devclaw:subagent:my-project-architect-senior");
+    const result = parseVibeClawCoderSessionKey("agent:vibeclawcoder:subagent:my-project-architect-senior");
     assert.deepStrictEqual(result, { projectName: "my-project", role: "architect" });
   });
 
   it("should parse architect junior session key", () => {
-    const result = parseDevClawSessionKey("agent:devclaw:subagent:webapp-architect-junior");
+    const result = parseVibeClawCoderSessionKey("agent:vibeclawcoder:subagent:webapp-architect-junior");
     assert.deepStrictEqual(result, { projectName: "webapp", role: "architect" });
   });
 });

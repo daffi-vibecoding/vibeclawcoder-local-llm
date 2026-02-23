@@ -28,24 +28,24 @@ import { PLUGIN_VERSION } from "../upgrade.js";
 export async function ensureDefaultFiles(workspacePath: string): Promise<void> {
   const dataDir = path.join(workspacePath, DATA_DIR);
 
-  // devclaw/workflow.yaml
+  // vibeclawcoder/workflow.yaml
   const workflowPath = path.join(dataDir, "workflow.yaml");
   if (!await fileExists(workflowPath)) {
     await fs.mkdir(dataDir, { recursive: true });
     await fs.writeFile(workflowPath, WORKFLOW_YAML_TEMPLATE, "utf-8");
   }
 
-  // devclaw/projects.json
+  // vibeclawcoder/projects.json
   const projectsJsonPath = path.join(dataDir, "projects.json");
   if (!await fileExists(projectsJsonPath)) {
     await fs.mkdir(dataDir, { recursive: true });
     await fs.writeFile(projectsJsonPath, JSON.stringify({ projects: {} }, null, 2) + "\n", "utf-8");
   }
 
-  // devclaw/projects/ directory
+  // vibeclawcoder/projects/ directory
   await fs.mkdir(path.join(dataDir, "projects"), { recursive: true });
 
-  // devclaw/prompts/ — default role instructions (backup + overwrite)
+  // vibeclawcoder/prompts/ — default role instructions (backup + overwrite)
   const promptsDir = path.join(dataDir, "prompts");
   await fs.mkdir(promptsDir, { recursive: true });
   const hashes: Record<string, string> = {};
@@ -60,7 +60,7 @@ export async function ensureDefaultFiles(workspacePath: string): Promise<void> {
   // Backup project-specific prompt overrides (safety net during re-setup)
   await backupProjectPrompts(dataDir);
 
-  // devclaw/log/ directory (audit.log created on first write)
+  // vibeclawcoder/log/ directory (audit.log created on first write)
   await fs.mkdir(path.join(dataDir, "log"), { recursive: true });
 
   // Version stamp — prevents the heartbeat auto-upgrade from re-running
@@ -72,7 +72,7 @@ export async function ensureDefaultFiles(workspacePath: string): Promise<void> {
 }
 
 /**
- * Write all workspace files for a DevClaw agent.
+ * Write all workspace files for a VibeClawCoder agent.
  * Returns the list of files that were written (skips files that already exist).
  *
  * @param defaultWorkspacePath — If provided, USER.md is copied from here (only if not already present).

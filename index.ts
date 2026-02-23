@@ -26,7 +26,7 @@ import { registerAttachmentHook } from "./lib/attachment-hook.js";
 import { initRunCommand } from "./lib/run-command.js";
 
 const plugin = {
-  id: "devclaw",
+  id: "vibeclawcoder",
   name: "VibeClawCoder",
   description:
     "Local-first coding orchestration for OpenClaw (MiniMax primary, Codex specialist review/strategy).",
@@ -122,7 +122,7 @@ const plugin = {
 
     // CLI
     api.registerCli(({ program }: { program: any }) => registerCli(program, api), {
-      commands: ["devclaw"],
+      commands: ["vibeclawcoder"],
     });
 
     // Services

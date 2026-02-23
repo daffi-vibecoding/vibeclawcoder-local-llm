@@ -336,7 +336,7 @@ export class GitHubProvider implements IssueProvider {
    * This catches the common case where reviewers submit feedback as "Comment"
    * rather than "Request changes".
    *
-   * Note: We don't filter out self-reviews because DevClaw agents commit under
+   * Note: We don't filter out self-reviews because VibeClawCoder agents commit under
    * the repo owner's account — the PR author and reviewer are the same person.
    */
   private async hasUnacknowledgedReviews(prNumber: number): Promise<boolean> {
@@ -636,7 +636,7 @@ export class GitHubProvider implements IssueProvider {
     file: { filename: string; buffer: Buffer; mimeType: string },
   ): Promise<string | null> {
     try {
-      const branch = "devclaw-attachments";
+      const branch = "vibeclawcoder-attachments";
       const safeFilename = file.filename.replace(/[^a-zA-Z0-9._-]/g, "_");
       const filePath = `attachments/${issueId}/${Date.now()}-${safeFilename}`;
       const base64Content = file.buffer.toString("base64");
