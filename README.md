@@ -9,7 +9,7 @@ This fork is designed to keep the spirit of DevClaw (task rails + GitHub sync + 
 Target outcome:
 - codex-like effectiveness and speed
 - perpetual local coding usage
-- low monthly cloud cost with a Plus + Codex account
+- low monthly cloud cost with a GPT Plus account (see setup here https://youtu.be/7DNlQgl2Kk0?si=yLVtA88A6Y38pXso)
 
 ## Hardware + model baseline
 
@@ -39,3 +39,33 @@ This repository is in a pruning phase:
 - minimal role/state complexity
 
 No extra complexity unless it clearly improves reliability.
+
+## Phase 2: Minimal files to keep/add back (design only)
+
+### Keep from upstream core
+- `index.ts` — plugin entrypoint
+- `lib/` — only the minimum helpers needed for command routing + persistence
+- `openclaw.plugin.json` — plugin registration metadata
+- `package.json`, `tsconfig.json`, `build.mjs` — build/runtime scaffolding
+- `LICENSE`, `.gitignore`, `.npmignore`
+
+### Add back (new minimal layer)
+- `mini/config.ts` — tiny config schema (models, intervals, repos, channel targets)
+- `mini/state.ts` — tiny local state store (JSON file; current task, last sync, blockers)
+- `mini/loop-controller.ts` — 5-minute controller loop (keep coding alive/resume on crash)
+- `mini/sync-runner.ts` — 2-hour git sync loop (commit/push/pr-summary)
+- `mini/status-ticker.ts` — 20-minute status emitter (read-only, concise output)
+- `mini/tasks.ts` — tiny task queue contract (`todo/doing/done/blocked`) + GitHub mapper
+- `scripts/run-loop.sh` — local launcher script
+- `scripts/run-sync.sh` — local sync trigger
+- `scripts/run-ticker.sh` — local status trigger
+- `docs/MINI-ARCHITECTURE.md` — one-page design
+- `docs/OPERATOR-RUNBOOK.md` — one-page daily usage + recovery guide
+
+### Explicitly not re-adding (for now)
+- multi-role level matrix (`junior/medior/senior`)
+- deep workflow graph and extra state permutations
+- high-frequency autonomous issue-creation churn
+- heavy release/publishing/docs machinery
+
+This phase is design-only until reviewed and approved.
