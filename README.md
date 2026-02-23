@@ -8,6 +8,8 @@ This project is forked from `laurentenhoor/devclaw` and uses the upstream MIT li
 Original copyright and permission notice are retained in `LICENSE`.
 Additional code and modifications in this fork are released under the same MIT terms by `daffi-vibecoding`.
 
+Special thanks to Lauren ten Hoor (creator of DevClaw) for building the foundation this fork is based on.
+
 ## Why this exists
 
 This fork is designed to keep the useful DevClaw core (task rails + GitHub live workflow + chat-driven control) while cutting complexity and cloud burn.
@@ -27,6 +29,7 @@ Why fork now:
 Primary build runtime:
 - local MiniMax 2.5 5bit (`inferencer-local//mlx-community/MiniMax-M2.5-5bit`)
 - running on an Apple Silicon Mac Studio (Ultra M3, 256GB RAM)
+- shoutout to xCreate on YouTube and his bleeding edge MLX AI research and app Inferencer for macOS, which enabled this entire project (see https://youtu.be/O_pQG6x9dvY?si=NJ-hLpez7idBUFGR)
 
 Specialist cloud assist:
 - Codex account for review/hard fixes/security checks only
