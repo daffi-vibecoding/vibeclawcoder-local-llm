@@ -27,7 +27,7 @@ import { initRunCommand } from "./lib/run-command.js";
 
 const plugin = {
   id: "devclaw",
-  name: "DevClaw",
+  name: "VibeClawCoder",
   description:
     "Multi-project dev/qa pipeline orchestration with GitHub/GitLab integration, developer tiers, and audit logging.",
   configSchema: {
@@ -52,7 +52,7 @@ const plugin = {
       work_heartbeat: {
         type: "object",
         description:
-          "Token-free interval-based heartbeat service. Runs health checks + queue dispatch automatically. Discovers all DevClaw agents from openclaw.json and processes each independently.",
+          "Token-free interval-based heartbeat service. Runs health checks + queue dispatch automatically. Discovers all VibeClawCoder agents from openclaw.json and processes each independently.",
         properties: {
           enabled: {
             type: "boolean",
@@ -67,7 +67,7 @@ const plugin = {
           maxPickupsPerTick: {
             type: "number",
             default: 4,
-            description: "Max worker dispatches per agent per tick. Applied to each DevClaw agent independently.",
+            description: "Max worker dispatches per agent per tick. Applied to each VibeClawCoder agent independently.",
           },
         },
       },
@@ -133,7 +133,7 @@ const plugin = {
     registerAttachmentHook(api);
 
     api.logger.info(
-      "DevClaw plugin registered (20 tools, 1 CLI command group, 1 service, 3 hooks)",
+      "VibeClawCoder plugin registered (20 tools, 1 CLI command group, 1 service, 3 hooks)",
     );
   },
 };

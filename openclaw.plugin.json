@@ -1,7 +1,7 @@
 {
   "id": "vibeclawcoder",
   "name": "VibeClawCoder",
-  "description": "Local-first coding orchestration fork for OpenClaw: simplified roles, MiniMax primary, Codex specialist review/strategy.",
+  "description": "Local-first coding orchestration for OpenClaw (MiniMax primary, Codex specialist review/strategy).",
   "configSchema": {
     "type": "object",
     "properties": {
@@ -48,7 +48,7 @@
       },
       "notifications": {
         "type": "object",
-        "description": "Per-event-type notification toggles. All default to true — set to false to suppress.",
+        "description": "Per-event-type notification toggles. All default to true \u2014 set to false to suppress.",
         "properties": {
           "workerStart": {
             "type": "boolean"
