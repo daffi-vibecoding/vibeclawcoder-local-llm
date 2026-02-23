@@ -17,17 +17,19 @@ export const ROLE_REGISTRY: Record<string, RoleConfig> = {
   developer: {
     id: "developer",
     displayName: "DEVELOPER",
-    levels: ["junior", "medior", "senior"],
+    levels: ["junior", "medior", "senior", "standard"],
     defaultLevel: "medior",
     models: {
       junior: "anthropic/claude-haiku-4-5",
       medior: "anthropic/claude-sonnet-4-5",
       senior: "anthropic/claude-opus-4-6",
+      standard: "inferencer-local//mlx-community/MiniMax-M2.5-5bit",
     },
     emoji: {
       junior: "⚡",
       medior: "🔧",
       senior: "🧠",
+      standard: "🤖",
     },
     fallbackEmoji: "🔧",
     completionResults: ["done", "blocked"],
@@ -38,17 +40,19 @@ export const ROLE_REGISTRY: Record<string, RoleConfig> = {
   tester: {
     id: "tester",
     displayName: "TESTER",
-    levels: ["junior", "medior", "senior"],
+    levels: ["junior", "medior", "senior", "standard"],
     defaultLevel: "medior",
     models: {
       junior: "anthropic/claude-haiku-4-5",
       medior: "anthropic/claude-sonnet-4-5",
       senior: "anthropic/claude-opus-4-6",
+      standard: "openai-codex/gpt-5.1-codex-mini",
     },
     emoji: {
       junior: "⚡",
       medior: "🔍",
       senior: "🧠",
+      standard: "🔍",
     },
     fallbackEmoji: "🔍",
     completionResults: ["pass", "fail", "refine", "blocked"],
@@ -59,15 +63,17 @@ export const ROLE_REGISTRY: Record<string, RoleConfig> = {
   architect: {
     id: "architect",
     displayName: "ARCHITECT",
-    levels: ["junior", "senior"],
+    levels: ["junior", "senior", "standard"],
     defaultLevel: "junior",
     models: {
       junior: "anthropic/claude-sonnet-4-5",
       senior: "anthropic/claude-opus-4-6",
+      standard: "openai-codex/gpt-5.3-codex",
     },
     emoji: {
       junior: "📐",
       senior: "🏗️",
+      standard: "🏗️",
     },
     fallbackEmoji: "🏗️",
     completionResults: ["done", "blocked"],
@@ -78,15 +84,17 @@ export const ROLE_REGISTRY: Record<string, RoleConfig> = {
   reviewer: {
     id: "reviewer",
     displayName: "REVIEWER",
-    levels: ["junior", "senior"],
+    levels: ["junior", "senior", "standard"],
     defaultLevel: "junior",
     models: {
       junior: "anthropic/claude-haiku-4-5",
       senior: "anthropic/claude-sonnet-4-5",
+      standard: "openai-codex/gpt-5.1-codex-mini",
     },
     emoji: {
       junior: "👁️",
       senior: "🔬",
+      standard: "👁️",
     },
     fallbackEmoji: "👁️",
     completionResults: ["approve", "reject", "blocked"],

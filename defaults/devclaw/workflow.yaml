@@ -1,0 +1,25 @@
+roles:
+  developer:
+    levels: [standard]
+    defaultLevel: standard
+    maxWorkers: 2
+    models:
+      standard: inferencer-local//mlx-community/MiniMax-M2.5-5bit
+  reviewer:
+    levels: [standard]
+    defaultLevel: standard
+    maxWorkers: 1
+    models:
+      standard: openai-codex/gpt-5.1-codex-mini
+  architect:
+    levels: [standard]
+    defaultLevel: standard
+    maxWorkers: 1
+    models:
+      standard: openai-codex/gpt-5.3-codex
+  tester: false
+
+workflow:
+  initial: planning
+  reviewPolicy: agent
+  roleExecution: parallel
