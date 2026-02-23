@@ -16,8 +16,8 @@
 - Intervene only on blockers >10 minutes
 
 ## End of day
-- Run `npm run mini:sync`
 - Review open blockers and top 3 next tasks
+- No manual sync needed — DevClaw handles live GitHub workflow
 
 ## Recovery
 - If MiniMax unavailable: restart inferencer and rerun `npm run mini:loop`

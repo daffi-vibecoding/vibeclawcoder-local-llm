@@ -91,7 +91,7 @@ No extra complexity unless it clearly improves reliability.
 - `LICENSE`, `.gitignore`, `.npmignore`
 
 ### Add back (new minimal layer)
-- `mini/config.ts` — tiny config schema (models, intervals, repos, channel targets)
+- `mini/config.ts` — tiny config schema (models, repos, channel targets)
 - `mini/state.ts` — tiny local state store (JSON file; current task, blockers)
 - `mini/loop-controller.ts` — 5-minute controller loop (keep coding alive/resume on crash)
 - `mini/status-ticker.ts` — 20-minute status emitter (read-only, concise output)
