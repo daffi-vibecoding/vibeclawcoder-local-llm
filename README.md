@@ -110,49 +110,6 @@ Model rationale is defined in the setup section above. In short:
 - Reviewer: Codex Mini (fast review)
 - Architect/Strategy: Codex 5.3 (best reasoning)
 
-## Setup + Model Swaps (with agent routing safeguards)
-
-### 0) Critical pre-setup: pick your operator agent (avoid fallback to `main`)
-
-If you want a specific agent (e.g. `<YOUR_OPERATOR_AGENT_ID>`) to run your coding workflow, lock routing first.
-
-Before running setup, ensure:
-1. Project channel mapping includes the right `accountId` (e.g. `<YOUR_OPERATOR_AGENT_ID>`) in `projects.json`.
-2. The target chat/group IDs are correct for each project channel.
-3. The same agent has the expected channel binding in your OpenClaw runtime config.
-
-Quick verification checklist:
-- Start one task from your intended project channel.
-- Confirm worker/session announcements come from the intended agent identity.
-- If work appears under `main`, fix channel/account routing before continuing.
-
-### 1) Configure default models
-
-There are two places to update:
-
-1) **Fork defaults (for new setups):**
-- `defaults/devclaw/workflow.yaml`
-
-2) **Role registry fallback defaults (runtime fallback):**
-- `lib/roles/registry.ts`
-
-Default local-first mapping in this fork:
-- developer.standard -> `inferencer-local//mlx-community/MiniMax-M2.5-5bit`
-- reviewer.standard -> `openai-codex/gpt-5.1-codex-mini`
-- architect.standard -> `openai-codex/gpt-5.3-codex`
-
-### 2) Swap models safely
-
-1. Update model IDs in both files above.
-2. Run type/build checks:
-   ```bash
-   npm run check
-   npm run build
-   ```
-3. Commit with a clear message, e.g. `chore: update role model mapping`.
-4. Test one developer dispatch + one reviewer dispatch in the intended project channel.
-5. Re-confirm announcements/session ownership are still on the intended agent (not `main`).
-
 ## Product positioning
 
 Designed by a novice vibecoder for other novice vibecoders.
