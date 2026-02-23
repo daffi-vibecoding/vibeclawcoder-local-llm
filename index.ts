@@ -29,7 +29,7 @@ const plugin = {
   id: "devclaw",
   name: "VibeClawCoder",
   description:
-    "Multi-project dev/qa pipeline orchestration with GitHub/GitLab integration, developer tiers, and audit logging.",
+    "Local-first coding orchestration for OpenClaw (MiniMax primary, Codex specialist review/strategy).",
   configSchema: {
     type: "object",
     properties: {
