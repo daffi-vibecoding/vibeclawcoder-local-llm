@@ -37,14 +37,14 @@ Use one of the following:
 # from local path
 openclaw plugins install /absolute/path/to/vibeclawcoder-local-llm
 
-# then enable
-openclaw plugins enable vibeclawcoder-local-llm
+# then enable by plugin id
+openclaw plugins enable vibeclawcoder
 ```
 
 Verify:
 ```bash
 openclaw plugins list
-openclaw plugins info vibeclawcoder-local-llm
+openclaw plugins info vibeclawcoder
 ```
 
 ### 3) Configure project repos
