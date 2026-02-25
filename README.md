@@ -153,7 +153,7 @@ Designed by a novice vibecoder for other novice vibecoders.
 
 ## Current fork stage
 
-✅ **MVP v1.0.7 (local-first) is live**
+✅ **MVP v1.0.8 (local-first) is live**
 
 For release notes, see [`CHANGELOG.md`](./CHANGELOG.md).
 
@@ -167,6 +167,8 @@ This fork now includes:
   - `pr_ensure_linked` tool for explicit PR preflight
   - auto-recovery in `work_finish(done)` (auto-link or auto-create PR)
   - branch/issue mismatch safeguards in dispatch and completion flow
+- single-scheduler ownership enforcement in heartbeat (`channels[].accountId` must match running agent)
+- early-PR discipline in worker task prompts (open/link PR after first meaningful commit)
 
 
 ## Planned minimal workflow

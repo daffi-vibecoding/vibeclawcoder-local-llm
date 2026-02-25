@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.8 - 2026-02-25
+
+- fix: enforce single-scheduler project ownership in heartbeat via `channels[].accountId` filtering
+- chore: require early PR linking during task execution (before completion step)
+- docs: add explicit single-scheduler rule and operator guidance in README + runbook
+
 ## v1.0.7 - 2026-02-25
 
 - feat: add `pr_ensure_linked` tool for explicit issue-PR linking preflight
