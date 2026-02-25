@@ -13,6 +13,7 @@ import {
   updateSlot,
   getRoleWorker,
   emptySlot,
+  resolveRepoPath,
 } from "./projects.js";
 import { fetchGatewaySessions, type GatewaySession } from "./services/gateway-sessions.js";
 import { resolveModel, getFallbackEmoji } from "./roles/index.js";
@@ -23,6 +24,7 @@ import { fetchPrFeedback, fetchPrContext, formatPrContext, formatPrFeedback, typ
 import { formatAttachmentsForTask } from "./attachments.js";
 import { loadRoleInstructions } from "./bootstrap-hook.js";
 import { slotName } from "./names.js";
+import { getCurrentBranch, extractIssueIdFromBranch } from "./pr-linking.js";
 
 export type DispatchOpts = {
   workspaceDir: string;
@@ -144,6 +146,9 @@ export function buildTaskMessage(opts: {
     `- Do not reuse another issue's PR for this task.`,
     ``,
     `## MANDATORY: Task Completion`,
+    ``,
+    `Before \`work_finish(result="done")\`, run \`pr_ensure_linked\` for this project/issue.`,
+    `Only call \`work_finish(done)\` after \`pr_ensure_linked\` reports success.`,
     ``,
     `When you finish this task, you MUST call \`work_finish\` with:`,
     `- \`role\`: "${role}"`,
@@ -367,6 +372,23 @@ export async function dispatchTask(
   }
 
   // Step 6: Audit
+  try {
+    const repoPath = resolveRepoPath(project.repo);
+    const branchName = await getCurrentBranch(repoPath);
+    const branchIssueId = extractIssueIdFromBranch(branchName);
+    if (branchIssueId !== null && branchIssueId !== issueId) {
+      await auditLog(workspaceDir, "dispatch_warning", {
+        step: "branch_issue_mismatch",
+        project: project.name,
+        issue: issueId,
+        branchName,
+        branchIssueId,
+      });
+    }
+  } catch {
+    // Best-effort sanity check
+  }
+
   await auditDispatch(workspaceDir, {
     project: project.name, issueId, issueTitle,
     role, level, model, sessionAction, sessionKey,

@@ -18,6 +18,7 @@ import { createResetDefaultsTool } from "./lib/tools/reset-defaults.js";
 import { createSyncLabelsTool } from "./lib/tools/sync-labels.js";
 import { createUpgradeTool } from "./lib/tools/upgrade.js";
 import { createClaimOwnershipTool } from "./lib/tools/claim-ownership.js";
+import { createPrEnsureLinkedTool } from "./lib/tools/pr-ensure-linked.js";
 import { registerCli } from "./lib/cli.js";
 import { registerHeartbeatService } from "./lib/services/heartbeat.js";
 import { registerBootstrapHook } from "./lib/bootstrap-hook.js";
@@ -80,6 +81,7 @@ const plugin = {
     // Worker lifecycle
     api.registerTool(createWorkStartTool(api), { names: ["work_start"] });
     api.registerTool(createWorkFinishTool(api), { names: ["work_finish"] });
+    api.registerTool(createPrEnsureLinkedTool(api), { names: ["pr_ensure_linked"] });
 
     // Task management
     api.registerTool(createTaskCreateTool(api), { names: ["task_create"] });
@@ -133,7 +135,7 @@ const plugin = {
     registerAttachmentHook(api);
 
     api.logger.info(
-      "VibeClawCoder plugin registered (20 tools, 1 CLI command group, 1 service, 3 hooks)",
+      "VibeClawCoder plugin registered (21 tools, 1 CLI command group, 1 service, 3 hooks)",
     );
   },
 };

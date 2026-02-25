@@ -147,7 +147,7 @@ Designed by a novice vibecoder for other novice vibecoders.
 
 ## Current fork stage
 
-✅ **MVP v1.0.6 (local-first) is live**
+✅ **MVP v1.0.7 (local-first) is live**
 
 For release notes, see [`CHANGELOG.md`](./CHANGELOG.md).
 
@@ -157,6 +157,10 @@ This fork now includes:
 - Codex mini review lane + Codex 5.3 strategy lane
 - minimal operator docs and runbook
 - lean defaults restored for stable setup/scaffolding
+- PR-link reliability hardening for autonomous runs:
+  - `pr_ensure_linked` tool for explicit PR preflight
+  - auto-recovery in `work_finish(done)` (auto-link or auto-create PR)
+  - branch/issue mismatch safeguards in dispatch and completion flow
 
 
 ## Planned minimal workflow

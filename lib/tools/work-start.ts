@@ -10,7 +10,7 @@ import { jsonResult } from "openclaw/plugin-sdk";
 import type { ToolContext } from "../types.js";
 import type { StateLabel } from "../providers/provider.js";
 import { selectLevel } from "../model-selector.js";
-import { getRoleWorker, findFreeSlot, countActiveSlots, reconcileSlots } from "../projects.js";
+import { getRoleWorker, findFreeSlot, countActiveSlots, reconcileSlots, resolveRepoPath } from "../projects.js";
 import { dispatchTask } from "../dispatch.js";
 import { findNextIssue, detectRoleFromLabel, detectRoleLevelFromLabels } from "../services/queue-scan.js";
 import { getAllRoleIds, getLevelsForRole } from "../roles/index.js";
@@ -18,6 +18,7 @@ import { requireWorkspaceDir, resolveProject, resolveProvider, getPluginConfig }
 import { getActiveLabel, getNotifyLabel, NOTIFY_LABEL_COLOR, NOTIFY_LABEL_PREFIX, ExecutionMode, getCurrentStateLabel } from "../workflow.js";
 import { loadConfig } from "../config/index.js";
 import { loadInstanceName } from "../instance.js";
+import { ensureIssueBranch } from "../pr-linking.js";
 
 export function createWorkStartTool(api: OpenClawPluginApi) {
   return (ctx: ToolContext) => ({
@@ -124,6 +125,15 @@ export function createWorkStartTool(api: OpenClawPluginApi) {
 
       // Dispatch (pass runtime for direct API access)
       const pluginConfig = getPluginConfig(api);
+      const repoPath = resolveRepoPath(project.repo);
+      const branchPreflight = await ensureIssueBranch(repoPath, issue.iid).catch((err) => {
+        throw new Error(
+          `Branch preflight failed for issue #${issue.iid}. ` +
+          `Please clean/stash local changes and ensure git is available. ` +
+          `Details: ${(err as Error).message ?? String(err)}`,
+        );
+      });
+
       const dr = await dispatchTask({
         workspaceDir, agentId: ctx.agentId, project, issueId: issue.iid,
         issueTitle: issue.title, issueDescription: issue.description ?? "", issueUrl: issue.web_url,
@@ -144,6 +154,7 @@ export function createWorkStartTool(api: OpenClawPluginApi) {
         role, level: dr.level, model: dr.model, sessionAction: dr.sessionAction,
         announcement: dr.announcement, labelTransition: `${currentLabel} → ${targetLabel}`,
         levelReason, levelSource,
+        branchPreflight,
         autoDetected: { role: !roleParam, issueId: issueIdParam === undefined, level: !levelParam },
       };
       // tickPickups removed with auto-tick

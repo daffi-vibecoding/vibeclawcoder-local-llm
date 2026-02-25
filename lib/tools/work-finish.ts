@@ -10,61 +10,13 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { jsonResult } from "openclaw/plugin-sdk";
 import type { ToolContext } from "../types.js";
-import { getRoleWorker, resolveRepoPath, findSlotByIssue } from "../projects.js";
+import { getRoleWorker, resolveRepoPath } from "../projects.js";
 import { executeCompletion, getRule } from "../services/pipeline.js";
 import { log as auditLog } from "../audit.js";
 import { requireWorkspaceDir, resolveProject, resolveProvider, getPluginConfig } from "../tool-helpers.js";
 import { getAllRoleIds, isValidResult, getCompletionResults } from "../roles/index.js";
 import { loadWorkflow } from "../workflow.js";
-import { runCommand } from "../run-command.js";
-
-/**
- * Get the current git branch name.
- */
-async function getCurrentBranch(repoPath: string): Promise<string> {
-  const result = await runCommand(["git", "branch", "--show-current"], {
-    timeoutMs: 5_000,
-    cwd: repoPath,
-  });
-  return result.stdout.trim();
-}
-
-async function getDefaultBaseBranch(repoPath: string): Promise<string> {
-  try {
-    const result = await runCommand(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], {
-      timeoutMs: 5_000,
-      cwd: repoPath,
-    });
-    const ref = result.stdout.trim();
-    if (ref.startsWith("origin/")) return ref.slice("origin/".length);
-  } catch {
-    // Keep fallback
-  }
-  return "main";
-}
-
-function isBaseBranch(branchName: string): boolean {
-  return branchName === "main" || branchName === "master";
-}
-
-/**
- * Return the first open PR for a head branch (if any).
- */
-async function getOpenPrForBranch(
-  repoPath: string,
-  branchName: string,
-): Promise<{ number: number; url: string; title: string } | null> {
-  try {
-    const result = await runCommand(
-      ["gh", "pr", "list", "--state", "open", "--head", branchName, "--json", "number,url,title", "--limit", "1"],
-      { timeoutMs: 10_000, cwd: repoPath },
-    );
-    const rows = JSON.parse(result.stdout || "[]") as Array<{ number: number; url: string; title: string }>;
-    return rows[0] ?? null;
-  } catch {
-    return null;
-  }
-}
+import { ensurePrLinkedToIssue, isBaseBranch, extractIssueIdFromBranch } from "../pr-linking.js";
 
 /**
  * Validate that a developer has created a PR for their work.
@@ -81,99 +33,40 @@ async function validatePrExistsForDeveloper(
   repoPath: string,
   provider: Awaited<ReturnType<typeof resolveProvider>>["provider"],
 ): Promise<void> {
-  // Always resolve current branch first so errors can give deterministic guidance.
-  let branchName = "current-branch";
   try {
-    branchName = await getCurrentBranch(repoPath);
-  } catch {
-    // Keep fallback placeholder
-  }
-
-  try {
-    let prStatus = await provider.getPrStatus(issueId);
+    const ensured = await ensurePrLinkedToIssue(issueId, repoPath, provider);
+    const branchIssueId = extractIssueIdFromBranch(ensured.branchName);
+    if (branchIssueId !== null && branchIssueId !== issueId) {
+      throw new Error(
+        `Cannot mark work_finish(done): branch mismatch.\n\n` +
+        `Current branch: ${ensured.branchName} (issue #${branchIssueId})\n` +
+        `Active slot issue: #${issueId}\n\n` +
+        `Switch to the correct branch for issue #${issueId} and call work_finish again.`,
+      );
+    }
 
     // url is null when getPrStatus found no open or merged PR for this issue.
-    // This covers both "no PR ever created" and "PR was closed without merging".
-    if (!prStatus.url) {
-      let attemptedRecovery = false;
-      let recoveryNote = "";
-      const baseBranch = await getDefaultBaseBranch(repoPath);
-
-      if (!isBaseBranch(branchName)) {
-        const branchPr = await getOpenPrForBranch(repoPath, branchName);
-        if (branchPr) {
-          attemptedRecovery = true;
-          try {
-            await runCommand(
-              ["gh", "pr", "edit", String(branchPr.number), "--add-body", `\n\nCloses #${issueId}`],
-              { timeoutMs: 15_000, cwd: repoPath },
-            );
-            recoveryNote =
-              `\n\nRecovery attempted: added "Closes #${issueId}" to PR #${branchPr.number} for branch ${branchName}.`;
-          } catch {
-            recoveryNote =
-              `\n\nRecovery attempted: could not edit PR #${branchPr.number}. You may need to run:\n` +
-              `  gh pr edit ${branchPr.number} --add-body "Closes #${issueId}"`;
-          }
-        } else {
-          attemptedRecovery = true;
-          try {
-            await runCommand(
-              [
-                "gh",
-                "pr",
-                "create",
-                "--base",
-                baseBranch,
-                "--head",
-                branchName,
-                "--title",
-                `Issue #${issueId}: implementation`,
-                "--body",
-                `Closes #${issueId}`,
-              ],
-              { timeoutMs: 20_000, cwd: repoPath },
-            );
-            recoveryNote =
-              `\n\nRecovery attempted: created a PR for ${branchName} with "Closes #${issueId}".`;
-          } catch {
-            recoveryNote =
-              `\n\nRecovery attempted: could not auto-create PR. You may need to run:\n` +
-              `  gh pr create --base ${baseBranch} --head ${branchName} --title "..." --body "Closes #${issueId}"`;
-          }
-        }
-      }
-
-      if (attemptedRecovery) {
-        try {
-          prStatus = await provider.getPrStatus(issueId);
-        } catch {
-          // Keep existing prStatus if refresh fails
-        }
-      }
-
-      if (prStatus.url) {
-        return;
-      }
-
-      const branchPr = await getOpenPrForBranch(repoPath, branchName);
-      const branchMismatchHint = branchPr
+    if (!ensured.linked) {
+      const branchMismatchHint = ensured.branchPr
         ? `\n\nAn open PR already exists for the current branch, but it is not linked to issue #${issueId}:\n` +
-          `  #${branchPr.number} ${branchPr.url}\n` +
+          `  #${ensured.branchPr.number} ${ensured.branchPr.url}\n` +
           `Likely causes: wrong branch for this issue, or PR body/title is missing "Closes #${issueId}".`
+        : "";
+      const recoveryNote = ensured.actions.length > 0
+        ? `\n\nRecovery attempted:\n${ensured.actions.map((a) => `- ${a}`).join("\n")}`
         : "";
 
       throw new Error(
         `Cannot mark work_finish(done) without an open PR.\n\n` +
-        `✗ No PR found for branch: ${branchName}\n\n` +
-        (isBaseBranch(branchName)
+        `✗ No PR found for branch: ${ensured.branchName}\n\n` +
+        (isBaseBranch(ensured.branchName)
           ? `You are on the base branch. Create/switch to an issue branch first (example: issue-${issueId}-short-name).\n\n`
           : "") +
         branchMismatchHint +
         recoveryNote +
         `\n\n` +
         `Please create a PR first:\n` +
-        `  gh pr create --base ${baseBranch} --head ${branchName} --title "..." --body "Closes #${issueId}"\n\n` +
+        `  gh pr create --base ${ensured.baseBranch} --head ${ensured.branchName} --title "..." --body "Closes #${issueId}"\n\n` +
         `Then call work_finish again.`,
       );
     }
