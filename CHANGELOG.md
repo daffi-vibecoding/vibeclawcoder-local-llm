@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v1.0.10 - 2026-02-25
+
 - feat: add global `vibeclawcoder_status` tool (cross-agent status + ownership mismatches + snapshot deltas)
 - fix: enforce project owner guard in `work_start` and `work_finish` (non-owner agents cannot mutate)
 - chore: persist project owner on registration (`ownerAgentId` and channel `accountId` propagation)
