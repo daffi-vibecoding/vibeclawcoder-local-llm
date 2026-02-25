@@ -142,6 +142,7 @@ export function buildTaskMessage(opts: {
     `Before writing code, ensure you are on an issue-specific branch for #${issueId}.`,
     `- Recommended branch: \`issue-${issueId}-short-name\``,
     `- If current branch is unrelated (or \`main\`), switch/create branch first.`,
+    `- After first meaningful commit, run \`pr_ensure_linked\` to open/link the PR immediately.`,
     `- PR must explicitly link this issue in title/body (example: \`Closes #${issueId}\`).`,
     `- Do not reuse another issue's PR for this task.`,
     ``,
