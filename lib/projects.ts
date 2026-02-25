@@ -126,6 +126,8 @@ export type Channel = {
 export type Project = {
   slug: string;
   name: string;
+  /** Single owning orchestrator agent ID for this project. */
+  ownerAgentId?: string;
   repo: string;
   repoRemote?: string; // Git remote URL (e.g., https://github.com/.../repo.git)
   groupName: string;

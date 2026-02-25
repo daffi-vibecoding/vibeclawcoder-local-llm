@@ -169,6 +169,8 @@ This fork now includes:
   - branch/issue mismatch safeguards in dispatch and completion flow
 - single-scheduler ownership enforcement in heartbeat (`channels[].accountId` must match running agent)
 - early-PR discipline in worker task prompts (open/link PR after first meaningful commit)
+- hard ownership enforcement in mutation tools (`work_start` / `work_finish`) based on project owner
+- global `vibeclawcoder_status` tool to report all active VibeClaw agents/projects from any agent session
 
 
 ## Planned minimal workflow

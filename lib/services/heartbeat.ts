@@ -34,6 +34,7 @@ import { loadConfig } from "../config/index.js";
 import type { ResolvedConfig } from "../config/types.js";
 import { ExecutionMode, resolveNotifyChannel } from "../workflow.js";
 import { notify, getNotificationConfig } from "../notify.js";
+import { projectOwnedByAgent } from "../ownership.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -58,23 +59,6 @@ type TickResult = {
   totalReviewSkipTransitions: number;
   totalTestSkipTransitions: number;
 };
-
-function projectOwnedByAgent(project: Project, agentId?: string): boolean {
-  if (!agentId) return true;
-
-  const configuredOwners = Array.from(
-    new Set(
-      (project.channels ?? [])
-        .map((c) => c.accountId?.trim())
-        .filter((v): v is string => !!v),
-    ),
-  );
-
-  // Backward compatibility: projects with no explicit channel owner remain processable.
-  if (configuredOwners.length === 0) return true;
-
-  return configuredOwners.includes(agentId);
-}
 
 type ServiceContext = {
   logger: {

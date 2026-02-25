@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- feat: add global `vibeclawcoder_status` tool (cross-agent status + ownership mismatches + snapshot deltas)
+- fix: enforce project owner guard in `work_start` and `work_finish` (non-owner agents cannot mutate)
+- chore: persist project owner on registration (`ownerAgentId` and channel `accountId` propagation)
+
 ## v1.0.8 - 2026-02-25
 
 - fix: enforce single-scheduler project ownership in heartbeat via `channels[].accountId` filtering

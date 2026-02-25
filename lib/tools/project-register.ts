@@ -134,6 +134,7 @@ export function createProjectRegisterTool() {
       const deployBranch = (params.deployBranch as string) ?? baseBranch;
       const deployUrl = (params.deployUrl as string) ?? "";
       const workspaceDir = ctx.workspaceDir;
+      const ownerAgentId = ctx.agentId;
 
       if (!workspaceDir) {
         throw new Error("No workspace directory available in tool context");
@@ -208,8 +209,12 @@ export function createProjectRegisterTool() {
           channel: channel as "telegram" | "whatsapp" | "discord" | "slack",
           name: `channel-${existing.channels.length + 1}`,
           events: ["*"],
+          ...(ownerAgentId ? { accountId: ownerAgentId } : {}),
         };
         existing.channels.push(newChannel);
+        if (!existing.ownerAgentId && ownerAgentId) {
+          existing.ownerAgentId = ownerAgentId;
+        }
         if (repoRemote && !existing.repoRemote) {
           existing.repoRemote = repoRemote;
         }
@@ -226,11 +231,13 @@ export function createProjectRegisterTool() {
           channel: channel as "telegram" | "whatsapp" | "discord" | "slack",
           name: "primary",
           events: ["*"],
+          ...(ownerAgentId ? { accountId: ownerAgentId } : {}),
         };
 
         data.projects[slug] = {
           slug,
           name,
+          ...(ownerAgentId ? { ownerAgentId } : {}),
           repo,
           repoRemote,
           groupName,

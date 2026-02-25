@@ -19,6 +19,7 @@ import { getActiveLabel, getNotifyLabel, NOTIFY_LABEL_COLOR, NOTIFY_LABEL_PREFIX
 import { loadConfig } from "../config/index.js";
 import { loadInstanceName } from "../instance.js";
 import { ensureIssueBranch } from "../pr-linking.js";
+import { assertProjectOwnedByAgent } from "../ownership.js";
 
 export function createWorkStartTool(api: OpenClawPluginApi) {
   return (ctx: ToolContext) => ({
@@ -45,6 +46,7 @@ export function createWorkStartTool(api: OpenClawPluginApi) {
 
       if (!slug) throw new Error("projectSlug is required");
       const { project } = await resolveProject(workspaceDir, slug);
+      assertProjectOwnedByAgent(project, ctx.agentId, "work_start");
       const { provider } = await resolveProvider(project);
 
       const resolvedConfig = await loadConfig(workspaceDir, project.name);

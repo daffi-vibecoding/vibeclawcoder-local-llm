@@ -17,6 +17,7 @@ import { requireWorkspaceDir, resolveProject, resolveProvider, getPluginConfig }
 import { getAllRoleIds, isValidResult, getCompletionResults } from "../roles/index.js";
 import { loadWorkflow } from "../workflow.js";
 import { ensurePrLinkedToIssue, isBaseBranch, extractIssueIdFromBranch } from "../pr-linking.js";
+import { assertProjectOwnedByAgent } from "../ownership.js";
 
 /**
  * Validate that a developer has created a PR for their work.
@@ -143,6 +144,7 @@ export function createWorkFinishTool(api: OpenClawPluginApi) {
 
       // Resolve project + worker
       const { project } = await resolveProject(workspaceDir, slug);
+      assertProjectOwnedByAgent(project, ctx.agentId, "work_finish");
       const roleWorker = getRoleWorker(project, role);
 
       // Find the first active slot across all levels
