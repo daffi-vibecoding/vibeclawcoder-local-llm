@@ -29,6 +29,24 @@ async function getCurrentBranch(repoPath: string): Promise<string> {
   return result.stdout.trim();
 }
 
+async function getDefaultBaseBranch(repoPath: string): Promise<string> {
+  try {
+    const result = await runCommand(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], {
+      timeoutMs: 5_000,
+      cwd: repoPath,
+    });
+    const ref = result.stdout.trim();
+    if (ref.startsWith("origin/")) return ref.slice("origin/".length);
+  } catch {
+    // Keep fallback
+  }
+  return "main";
+}
+
+function isBaseBranch(branchName: string): boolean {
+  return branchName === "main" || branchName === "master";
+}
+
 /**
  * Return the first open PR for a head branch (if any).
  */
@@ -72,11 +90,72 @@ async function validatePrExistsForDeveloper(
   }
 
   try {
-    const prStatus = await provider.getPrStatus(issueId);
+    let prStatus = await provider.getPrStatus(issueId);
 
     // url is null when getPrStatus found no open or merged PR for this issue.
     // This covers both "no PR ever created" and "PR was closed without merging".
     if (!prStatus.url) {
+      let attemptedRecovery = false;
+      let recoveryNote = "";
+      const baseBranch = await getDefaultBaseBranch(repoPath);
+
+      if (!isBaseBranch(branchName)) {
+        const branchPr = await getOpenPrForBranch(repoPath, branchName);
+        if (branchPr) {
+          attemptedRecovery = true;
+          try {
+            await runCommand(
+              ["gh", "pr", "edit", String(branchPr.number), "--add-body", `\n\nCloses #${issueId}`],
+              { timeoutMs: 15_000, cwd: repoPath },
+            );
+            recoveryNote =
+              `\n\nRecovery attempted: added "Closes #${issueId}" to PR #${branchPr.number} for branch ${branchName}.`;
+          } catch {
+            recoveryNote =
+              `\n\nRecovery attempted: could not edit PR #${branchPr.number}. You may need to run:\n` +
+              `  gh pr edit ${branchPr.number} --add-body "Closes #${issueId}"`;
+          }
+        } else {
+          attemptedRecovery = true;
+          try {
+            await runCommand(
+              [
+                "gh",
+                "pr",
+                "create",
+                "--base",
+                baseBranch,
+                "--head",
+                branchName,
+                "--title",
+                `Issue #${issueId}: implementation`,
+                "--body",
+                `Closes #${issueId}`,
+              ],
+              { timeoutMs: 20_000, cwd: repoPath },
+            );
+            recoveryNote =
+              `\n\nRecovery attempted: created a PR for ${branchName} with "Closes #${issueId}".`;
+          } catch {
+            recoveryNote =
+              `\n\nRecovery attempted: could not auto-create PR. You may need to run:\n` +
+              `  gh pr create --base ${baseBranch} --head ${branchName} --title "..." --body "Closes #${issueId}"`;
+          }
+        }
+      }
+
+      if (attemptedRecovery) {
+        try {
+          prStatus = await provider.getPrStatus(issueId);
+        } catch {
+          // Keep existing prStatus if refresh fails
+        }
+      }
+
+      if (prStatus.url) {
+        return;
+      }
+
       const branchPr = await getOpenPrForBranch(repoPath, branchName);
       const branchMismatchHint = branchPr
         ? `\n\nAn open PR already exists for the current branch, but it is not linked to issue #${issueId}:\n` +
@@ -87,13 +166,14 @@ async function validatePrExistsForDeveloper(
       throw new Error(
         `Cannot mark work_finish(done) without an open PR.\n\n` +
         `✗ No PR found for branch: ${branchName}\n\n` +
-        (branchName === "main" || branchName === "master"
+        (isBaseBranch(branchName)
           ? `You are on the base branch. Create/switch to an issue branch first (example: issue-${issueId}-short-name).\n\n`
           : "") +
         branchMismatchHint +
+        recoveryNote +
         `\n\n` +
         `Please create a PR first:\n` +
-        `  gh pr create --base main --head ${branchName} --title "..." --body "Closes #${issueId}"\n\n` +
+        `  gh pr create --base ${baseBranch} --head ${branchName} --title "..." --body "Closes #${issueId}"\n\n` +
         `Then call work_finish again.`,
       );
     }
