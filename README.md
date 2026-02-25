@@ -84,6 +84,12 @@ Before first run, validate:
 
 If announcements appear under `main`, fix routing before continuing.
 
+Single-scheduler rule (required):
+- Every project channel must set exactly one `accountId` owner.
+- Only that owning agent should run heartbeat/dispatch for the project.
+- Do not register the same project in multiple agent workspaces.
+- Heartbeat now enforces this rule: projects with mismatched `accountId` are skipped for that agent.
+
 ### 7) First-run validation
 ```bash
 npm run mini:loop

@@ -14,6 +14,8 @@
 - Every 20 min: run `npm run mini:ticker`
 - VibeClawCoder handles live GitHub workflow (no 2h sync loop)
 - Intervene only on blockers >10 minutes
+- Keep one scheduler identity per project (`channels[].accountId` owner only)
+- Never run the same project from multiple agent workspaces
 
 ## End of day
 - Review open blockers and top 3 next tasks
@@ -23,3 +25,4 @@
 - If MiniMax unavailable: restart inferencer and rerun `npm run mini:loop`
 - If GitHub auth fails: re-auth with `gh auth login`
 - If dispatch mistakes occur: relabel issue back to `To Do` and rerun loop
+- If project appears in the wrong agent: fix `accountId` ownership and remove duplicate project registrations

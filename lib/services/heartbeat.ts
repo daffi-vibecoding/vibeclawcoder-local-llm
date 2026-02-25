@@ -59,6 +59,23 @@ type TickResult = {
   totalTestSkipTransitions: number;
 };
 
+function projectOwnedByAgent(project: Project, agentId?: string): boolean {
+  if (!agentId) return true;
+
+  const configuredOwners = Array.from(
+    new Set(
+      (project.channels ?? [])
+        .map((c) => c.accountId?.trim())
+        .filter((v): v is string => !!v),
+    ),
+  );
+
+  // Backward compatibility: projects with no explicit channel owner remain processable.
+  if (configuredOwners.length === 0) return true;
+
+  return configuredOwners.includes(agentId);
+}
+
 type ServiceContext = {
   logger: {
     info(msg: string): void;
@@ -317,7 +334,18 @@ export async function tick(opts: {
   const instanceName = await loadInstanceName(workspaceDir, resolvedWorkspaceConfig.instanceName);
 
   const data = await readProjects(workspaceDir);
-  const slugs = Object.keys(data.projects);
+  const allSlugs = Object.keys(data.projects);
+  const slugs = allSlugs.filter((slug) => {
+    const project = data.projects[slug];
+    if (!project) return false;
+    const owned = projectOwnedByAgent(project, agentId);
+    if (!owned) {
+      opts.logger.info(
+        `Skipping project ${slug} in agent ${agentId ?? "unknown"}: channel accountId ownership mismatch`,
+      );
+    }
+    return owned;
+  });
 
   if (slugs.length === 0) {
     return {
@@ -421,6 +449,7 @@ export async function tick(opts: {
 
   await auditLog(workspaceDir, "heartbeat_tick", {
     projectsScanned: slugs.length,
+    projectsSeen: allSlugs.length,
     healthFixes: result.totalHealthFixes,
     reviewTransitions: result.totalReviewTransitions,
     reviewSkipTransitions: result.totalReviewSkipTransitions,
