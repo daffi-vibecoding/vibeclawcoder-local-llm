@@ -30,6 +30,25 @@ async function getCurrentBranch(repoPath: string): Promise<string> {
 }
 
 /**
+ * Return the first open PR for a head branch (if any).
+ */
+async function getOpenPrForBranch(
+  repoPath: string,
+  branchName: string,
+): Promise<{ number: number; url: string; title: string } | null> {
+  try {
+    const result = await runCommand(
+      ["gh", "pr", "list", "--state", "open", "--head", branchName, "--json", "number,url,title", "--limit", "1"],
+      { timeoutMs: 10_000, cwd: repoPath },
+    );
+    const rows = JSON.parse(result.stdout || "[]") as Array<{ number: number; url: string; title: string }>;
+    return rows[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Validate that a developer has created a PR for their work.
  * Throws an error if no open (or merged) PR is found for the issue.
  *
@@ -44,25 +63,37 @@ async function validatePrExistsForDeveloper(
   repoPath: string,
   provider: Awaited<ReturnType<typeof resolveProvider>>["provider"],
 ): Promise<void> {
+  // Always resolve current branch first so errors can give deterministic guidance.
+  let branchName = "current-branch";
+  try {
+    branchName = await getCurrentBranch(repoPath);
+  } catch {
+    // Keep fallback placeholder
+  }
+
   try {
     const prStatus = await provider.getPrStatus(issueId);
 
     // url is null when getPrStatus found no open or merged PR for this issue.
     // This covers both "no PR ever created" and "PR was closed without merging".
     if (!prStatus.url) {
-      // Get current branch for a helpful gh pr create example
-      let branchName = "current-branch";
-      try {
-        branchName = await getCurrentBranch(repoPath);
-      } catch {
-        // Fall back to generic placeholder
-      }
+      const branchPr = await getOpenPrForBranch(repoPath, branchName);
+      const branchMismatchHint = branchPr
+        ? `\n\nAn open PR already exists for the current branch, but it is not linked to issue #${issueId}:\n` +
+          `  #${branchPr.number} ${branchPr.url}\n` +
+          `Likely causes: wrong branch for this issue, or PR body/title is missing "Closes #${issueId}".`
+        : "";
 
       throw new Error(
         `Cannot mark work_finish(done) without an open PR.\n\n` +
         `✗ No PR found for branch: ${branchName}\n\n` +
+        (branchName === "main" || branchName === "master"
+          ? `You are on the base branch. Create/switch to an issue branch first (example: issue-${issueId}-short-name).\n\n`
+          : "") +
+        branchMismatchHint +
+        `\n\n` +
         `Please create a PR first:\n` +
-        `  gh pr create --base main --head ${branchName} --title "..." --body "..."\n\n` +
+        `  gh pr create --base main --head ${branchName} --title "..." --body "Closes #${issueId}"\n\n` +
         `Then call work_finish again.`,
       );
     }

@@ -135,6 +135,14 @@ export function buildTaskMessage(opts: {
 
   parts.push(
     ``, `---`, ``,
+    `## MANDATORY: Branch + PR Discipline`,
+    ``,
+    `Before writing code, ensure you are on an issue-specific branch for #${issueId}.`,
+    `- Recommended branch: \`issue-${issueId}-short-name\``,
+    `- If current branch is unrelated (or \`main\`), switch/create branch first.`,
+    `- PR must explicitly link this issue in title/body (example: \`Closes #${issueId}\`).`,
+    `- Do not reuse another issue's PR for this task.`,
+    ``,
     `## MANDATORY: Task Completion`,
     ``,
     `When you finish this task, you MUST call \`work_finish\` with:`,
