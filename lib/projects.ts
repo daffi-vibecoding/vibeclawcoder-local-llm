@@ -120,6 +120,15 @@ export type Channel = {
   accountId?: string; // Optional account ID for multi-account setups
 };
 
+export type DailyStatusProjectConfig = {
+  /** Per-project override for enabling/disabling scheduled daily status reports. */
+  enabled?: boolean;
+  /** Target channel name from channels[].name (defaults to "primary"). */
+  channelName?: string;
+  /** Agent ID responsible for posting this project's daily status report. */
+  agentId?: string;
+};
+
 /**
  * Project configuration in the new project-first schema.
  */
@@ -138,6 +147,8 @@ export type Project = {
   channels: Channel[];
   /** Issue tracker provider type (github or gitlab). Auto-detected at registration, stored for reuse. */
   provider?: "github" | "gitlab";
+  /** Per-project daily status report routing/ownership overrides. */
+  dailyStatus?: DailyStatusProjectConfig;
   maxDevWorkers?: number;
   maxQaWorkers?: number;
   /** Worker state per role (developer, tester, architect, or custom roles). Shared across all channels. */

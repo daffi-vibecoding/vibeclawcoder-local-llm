@@ -8,6 +8,21 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { HEARTBEAT_DEFAULTS } from "../services/heartbeat.js";
 import type { ExecutionMode } from "../workflow.js";
 
+export type DailyStatusSetupConfig = {
+  enabled?: boolean;
+  hourLocal?: number;
+  minuteLocal?: number;
+  defaultChannelName?: string;
+  defaultAgentId?: string;
+};
+
+const DAILY_STATUS_DEFAULTS: Required<Omit<DailyStatusSetupConfig, "defaultAgentId">> = {
+  enabled: true,
+  hourLocal: 12,
+  minuteLocal: 0,
+  defaultChannelName: "primary",
+};
+
 /**
  * Write VibeClawCoder plugin config to openclaw.json plugins section.
  *
@@ -23,6 +38,7 @@ export async function writePluginConfig(
   api: OpenClawPluginApi,
   agentId?: string,
   projectExecution?: ExecutionMode,
+  dailyStatus?: DailyStatusSetupConfig,
 ): Promise<void> {
   const config = api.runtime.config.loadConfig() as Record<string, unknown>;
 
@@ -37,6 +53,7 @@ export async function writePluginConfig(
 
   ensureInternalHooks(config);
   ensureHeartbeatDefaults(config);
+  ensureDailyStatusDefaults(config, dailyStatus, agentId);
   configureSubagentCleanup(config);
   ensureTelegramLinkPreviewDisabled(config);
 
@@ -91,6 +108,24 @@ function ensureHeartbeatDefaults(config: Record<string, unknown>): void {
   if (!vibeclawcoder.work_heartbeat) {
     vibeclawcoder.work_heartbeat = { ...HEARTBEAT_DEFAULTS };
   }
+}
+
+function ensureDailyStatusDefaults(
+  config: Record<string, unknown>,
+  dailyStatus?: DailyStatusSetupConfig,
+  setupAgentId?: string,
+): void {
+  const vibeclawcoder = (config as any).plugins.entries.vibeclawcoder.config;
+  const existing = (vibeclawcoder.daily_status ?? {}) as DailyStatusSetupConfig;
+  vibeclawcoder.daily_status = {
+    ...DAILY_STATUS_DEFAULTS,
+    ...existing,
+    ...dailyStatus,
+    defaultAgentId:
+      dailyStatus?.defaultAgentId ??
+      existing.defaultAgentId ??
+      setupAgentId,
+  };
 }
 
 /**

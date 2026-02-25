@@ -32,7 +32,7 @@ import { testSkipPass } from "./test-skip.js";
 import { createProvider } from "../providers/index.js";
 import { loadConfig } from "../config/index.js";
 import type { ResolvedConfig } from "../config/types.js";
-import { ExecutionMode, resolveNotifyChannel } from "../workflow.js";
+import { ExecutionMode, resolveNotifyChannel, StateType } from "../workflow.js";
 import { notify, getNotificationConfig } from "../notify.js";
 import { projectOwnedByAgent } from "../ownership.js";
 
@@ -44,6 +44,14 @@ export type HeartbeatConfig = {
   enabled: boolean;
   intervalSeconds: number;
   maxPickupsPerTick: number;
+};
+
+type DailyStatusConfig = {
+  enabled: boolean;
+  hourLocal: number;
+  minuteLocal: number;
+  defaultChannelName: string;
+  defaultAgentId?: string;
 };
 
 type Agent = {
@@ -81,6 +89,13 @@ export const HEARTBEAT_DEFAULTS: HeartbeatConfig = {
   maxPickupsPerTick: 4,
 };
 
+export const DAILY_STATUS_DEFAULTS: DailyStatusConfig = {
+  enabled: true,
+  hourLocal: 12,
+  minuteLocal: 0,
+  defaultChannelName: "primary",
+};
+
 export function resolveHeartbeatConfig(
   pluginConfig?: Record<string, unknown>,
 ): HeartbeatConfig {
@@ -88,6 +103,20 @@ export function resolveHeartbeatConfig(
     | Partial<HeartbeatConfig>
     | undefined;
   return { ...HEARTBEAT_DEFAULTS, ...raw };
+}
+
+export function resolveDailyStatusConfig(
+  pluginConfig?: Record<string, unknown>,
+): DailyStatusConfig {
+  const raw = (pluginConfig?.daily_status ?? {}) as Partial<DailyStatusConfig>;
+  return {
+    ...DAILY_STATUS_DEFAULTS,
+    ...raw,
+    hourLocal: Math.max(0, Math.min(23, Number(raw.hourLocal ?? DAILY_STATUS_DEFAULTS.hourLocal))),
+    minuteLocal: Math.max(0, Math.min(59, Number(raw.minuteLocal ?? DAILY_STATUS_DEFAULTS.minuteLocal))),
+    defaultChannelName: String(raw.defaultChannelName ?? DAILY_STATUS_DEFAULTS.defaultChannelName),
+    defaultAgentId: raw.defaultAgentId ? String(raw.defaultAgentId) : undefined,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -101,7 +130,8 @@ export function registerHeartbeatService(api: OpenClawPluginApi) {
     id: "vibeclawcoder-heartbeat",
 
     start: async (ctx: ServiceContext) => {
-      const { intervalSeconds } = HEARTBEAT_DEFAULTS;
+      const pluginConfig = api.pluginConfig as Record<string, unknown> | undefined;
+      const { intervalSeconds } = resolveHeartbeatConfig(pluginConfig);
 
       // Config + agent discovery happen per-tick so the heartbeat automatically
       // picks up projects onboarded after the gateway starts — no restart needed.
@@ -366,6 +396,16 @@ export async function tick(opts: {
       });
       const resolvedConfig = await loadConfig(workspaceDir, project.name);
 
+      await performDailyStatusReport(
+        workspaceDir,
+        project,
+        provider,
+        resolvedConfig,
+        pluginConfig,
+        runtime,
+        agentId,
+      );
+
       // Health pass: auto-fix zombies and stale workers
       result.totalHealthFixes += await performHealthPass(
         workspaceDir,
@@ -443,6 +483,150 @@ export async function tick(opts: {
   });
 
   return result;
+}
+
+type DailyStatusState = {
+  sent: Record<string, string>;
+};
+
+function dailyStatusStatePath(workspaceDir: string): string {
+  return path.join(workspaceDir, DATA_DIR, "daily-status-state.json");
+}
+
+async function readDailyStatusState(workspaceDir: string): Promise<DailyStatusState> {
+  try {
+    const raw = await fs.promises.readFile(dailyStatusStatePath(workspaceDir), "utf-8");
+    const parsed = JSON.parse(raw) as DailyStatusState;
+    return parsed && typeof parsed === "object" && parsed.sent ? parsed : { sent: {} };
+  } catch {
+    return { sent: {} };
+  }
+}
+
+async function writeDailyStatusState(workspaceDir: string, state: DailyStatusState): Promise<void> {
+  const file = dailyStatusStatePath(workspaceDir);
+  const tmp = file + ".tmp";
+  await fs.promises.mkdir(path.dirname(file), { recursive: true });
+  await fs.promises.writeFile(tmp, JSON.stringify(state, null, 2) + "\n", "utf-8");
+  await fs.promises.rename(tmp, file);
+}
+
+function localDateStamp(now: Date): string {
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+function scheduledWindowOpen(now: Date, cfg: DailyStatusConfig): boolean {
+  const minsNow = now.getHours() * 60 + now.getMinutes();
+  const minsSchedule = cfg.hourLocal * 60 + cfg.minuteLocal;
+  return minsNow >= minsSchedule;
+}
+
+function countActiveWorkers(project: Project): number {
+  let active = 0;
+  for (const roleState of Object.values(project.workers ?? {})) {
+    for (const slots of Object.values(roleState.levels ?? {})) {
+      for (const slot of slots) {
+        if (slot.active) active++;
+      }
+    }
+  }
+  return active;
+}
+
+async function buildDailyStatusSummary(
+  provider: import("../providers/provider.js").IssueProvider,
+  workflow: ResolvedConfig["workflow"],
+  project: Project,
+): Promise<string> {
+  let queue = 0;
+  let active = 0;
+  let closed = 0;
+  const perState: Array<{ label: string; count: number }> = [];
+
+  for (const state of Object.values(workflow.states)) {
+    const issues = await provider.listIssues({
+      label: state.label,
+      state: state.type === StateType.TERMINAL ? "closed" : "open",
+    }).catch(() => []);
+    perState.push({ label: state.label, count: issues.length });
+    if (state.type === StateType.QUEUE) queue += issues.length;
+    if (state.type === StateType.ACTIVE) active += issues.length;
+    if (state.type === StateType.TERMINAL) closed += issues.length;
+  }
+
+  const openIssues = await provider.listIssues({ state: "open" }).catch(() => []);
+  const workerActive = countActiveWorkers(project);
+  const stateSummary = perState
+    .filter((s) => s.count > 0)
+    .map((s) => `${s.label}: ${s.count}`)
+    .join(" | ");
+
+  return [
+    `Open issues: ${openIssues.length}`,
+    `Queue: ${queue} | Active: ${active} | Closed-labeled: ${closed}`,
+    `Active workers: ${workerActive}`,
+    stateSummary ? `By state: ${stateSummary}` : "By state: no labeled items",
+  ].join("\n");
+}
+
+async function performDailyStatusReport(
+  workspaceDir: string,
+  project: Project,
+  provider: import("../providers/provider.js").IssueProvider,
+  resolvedConfig: ResolvedConfig,
+  pluginConfig: Record<string, unknown> | undefined,
+  runtime: PluginRuntime | undefined,
+  runningAgentId?: string,
+): Promise<void> {
+  const cfg = resolveDailyStatusConfig(pluginConfig);
+  const projectCfg = project.dailyStatus ?? {};
+  const enabled = projectCfg.enabled ?? cfg.enabled;
+  if (!enabled) return;
+
+  const ownerAgent =
+    projectCfg.agentId ??
+    cfg.defaultAgentId ??
+    project.ownerAgentId ??
+    project.channels[0]?.accountId;
+
+  if (ownerAgent && runningAgentId && ownerAgent !== runningAgentId) return;
+
+  const now = new Date();
+  if (!scheduledWindowOpen(now, cfg)) return;
+  const today = localDateStamp(now);
+  const channelName = projectCfg.channelName ?? cfg.defaultChannelName;
+  const target = project.channels.find((ch) => ch.name === channelName) ?? project.channels[0];
+  if (!target?.groupId) return;
+
+  const key = `${project.slug}:${target.channel}:${target.groupId}`;
+  const state = await readDailyStatusState(workspaceDir);
+  if (state.sent[key] === today) return;
+
+  const summary = await buildDailyStatusSummary(provider, resolvedConfig.workflow, project);
+  const notifyConfig = getNotificationConfig(pluginConfig);
+  const sent = await notify(
+    {
+      type: "dailyStatus",
+      project: project.name,
+      summary,
+    },
+    {
+      workspaceDir,
+      config: notifyConfig,
+      groupId: target.groupId,
+      channel: target.channel,
+      runtime,
+      accountId: target.accountId,
+    },
+  );
+
+  if (sent) {
+    state.sent[key] = today;
+    await writeDailyStatusState(workspaceDir, state);
+  }
 }
 
 /**

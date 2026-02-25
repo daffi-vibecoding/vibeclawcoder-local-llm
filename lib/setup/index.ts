@@ -11,7 +11,7 @@ import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { getAllDefaultModels } from "../roles/index.js";
 import { migrateChannelBinding } from "../binding-manager.js";
 import { createAgent, resolveWorkspacePath } from "./agent.js";
-import { writePluginConfig } from "./config.js";
+import { writePluginConfig, type DailyStatusSetupConfig } from "./config.js";
 import { scaffoldWorkspace } from "./workspace.js";
 import { DATA_DIR } from "./migrate-layout.js";
 import type { ExecutionMode } from "../workflow.js";
@@ -35,6 +35,8 @@ export type SetupOpts = {
   models?: Record<string, Partial<Record<string, string>>>;
   /** Plugin-level project execution mode: parallel or sequential. Default: parallel. */
   projectExecution?: ExecutionMode;
+  /** Scheduled daily status defaults (stored in openclaw.json plugin config). */
+  dailyStatus?: DailyStatusSetupConfig;
 };
 
 export type SetupResult = {
@@ -44,6 +46,7 @@ export type SetupResult = {
   models: ModelConfig;
   filesWritten: string[];
   warnings: string[];
+  dailyStatus: Required<Omit<DailyStatusSetupConfig, "defaultAgentId">> & { defaultAgentId?: string };
   bindingMigrated?: {
     from: string;
     channel: "telegram" | "whatsapp";
@@ -64,7 +67,15 @@ export async function runSetup(opts: SetupOpts): Promise<SetupResult> {
   const { agentId, workspacePath, agentCreated, bindingMigrated } =
     await resolveOrCreateAgent(opts, warnings);
 
-  await writePluginConfig(opts.api, agentId, opts.projectExecution);
+  await writePluginConfig(
+    opts.api,
+    agentId,
+    opts.projectExecution,
+    {
+      ...opts.dailyStatus,
+      defaultAgentId: opts.dailyStatus?.defaultAgentId ?? agentId,
+    },
+  );
 
   const defaultWorkspacePath = getDefaultWorkspacePath(opts.api);
   const filesWritten = await scaffoldWorkspace(workspacePath, defaultWorkspacePath);
@@ -72,7 +83,15 @@ export async function runSetup(opts: SetupOpts): Promise<SetupResult> {
   const models = buildModelConfig(opts.models);
   await writeModelsToWorkflow(workspacePath, models);
 
-  return { agentId, agentCreated, workspacePath, models, filesWritten, warnings, bindingMigrated };
+  const dailyStatus = {
+    enabled: opts.dailyStatus?.enabled ?? true,
+    hourLocal: opts.dailyStatus?.hourLocal ?? 12,
+    minuteLocal: opts.dailyStatus?.minuteLocal ?? 0,
+    defaultChannelName: opts.dailyStatus?.defaultChannelName ?? "primary",
+    defaultAgentId: opts.dailyStatus?.defaultAgentId ?? agentId,
+  };
+
+  return { agentId, agentCreated, workspacePath, models, filesWritten, warnings, dailyStatus, bindingMigrated };
 }
 
 // ---------------------------------------------------------------------------

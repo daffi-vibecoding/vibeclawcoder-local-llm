@@ -49,6 +49,38 @@ const plugin = {
         properties: {
           workerStart: { type: "boolean", default: true },
           workerComplete: { type: "boolean", default: true },
+          dailyStatus: { type: "boolean", default: true },
+        },
+      },
+      daily_status: {
+        type: "object",
+        description:
+          "Scheduled project status reports posted by heartbeat (defaults to local noon, one report per project per day).",
+        properties: {
+          enabled: {
+            type: "boolean",
+            default: true,
+            description: "Enable scheduled daily status reporting.",
+          },
+          hourLocal: {
+            type: "number",
+            default: 12,
+            description: "Local-hour schedule for the daily report (0-23).",
+          },
+          minuteLocal: {
+            type: "number",
+            default: 0,
+            description: "Local-minute schedule for the daily report (0-59).",
+          },
+          defaultChannelName: {
+            type: "string",
+            default: "primary",
+            description: "Default project channel name for daily status routing.",
+          },
+          defaultAgentId: {
+            type: "string",
+            description: "Default agent ID responsible for posting daily status reports.",
+          },
         },
       },
       work_heartbeat: {
@@ -100,7 +132,7 @@ const plugin = {
     api.registerTool(createTaskListTool(api), { names: ["task_list"] });
     api.registerTool(createHealthTool(), { names: ["health"] });
     // Setup & config
-    api.registerTool(createProjectRegisterTool(), {
+    api.registerTool(createProjectRegisterTool(api), {
       names: ["project_register"],
     });
     api.registerTool(createSetupTool(api), { names: ["setup"] });

@@ -6,6 +6,7 @@
  *
  * Replaces the manual steps of running glab/gh label create + editing projects.json.
  */
+import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { jsonResult } from "openclaw/plugin-sdk";
 import type { ToolContext } from "../types.js";
 import fs from "node:fs/promises";
@@ -19,6 +20,7 @@ import { getAllRoleIds, getLevelsForRole } from "../roles/index.js";
 import { getRoleLabels } from "../workflow.js";
 import { loadConfig } from "../config/index.js";
 import { DATA_DIR } from "../setup/migrate-layout.js";
+import { getPluginConfig } from "../tool-helpers.js";
 
 /**
  * Scaffold project directory with prompts/ folder and a README explaining overrides.
@@ -80,7 +82,7 @@ Call \`workflow_guide\` for the full config reference.
   }
 }
 
-export function createProjectRegisterTool() {
+export function createProjectRegisterTool(api: OpenClawPluginApi) {
   return (ctx: ToolContext) => ({
     name: "project_register",
     label: "Project Register",
@@ -121,6 +123,18 @@ export function createProjectRegisterTool() {
           type: "string",
           description: "Deployment URL for the project",
         },
+        dailyStatusEnabled: {
+          type: "boolean",
+          description: "Enable daily noon status reports for this project (default: true).",
+        },
+        dailyStatusChannelName: {
+          type: "string",
+          description: "Channel name for daily status reports (default: primary).",
+        },
+        dailyStatusAgentId: {
+          type: "string",
+          description: "Agent ID allowed to post this project's daily status reports.",
+        },
       },
     },
 
@@ -135,6 +149,17 @@ export function createProjectRegisterTool() {
       const deployUrl = (params.deployUrl as string) ?? "";
       const workspaceDir = ctx.workspaceDir;
       const ownerAgentId = ctx.agentId;
+      const pluginConfig = getPluginConfig(api);
+      const dailyDefaults = (pluginConfig?.daily_status ?? {}) as {
+        enabled?: boolean;
+        defaultChannelName?: string;
+        defaultAgentId?: string;
+      };
+      const dailyStatus = {
+        enabled: (params.dailyStatusEnabled as boolean | undefined) ?? dailyDefaults.enabled ?? true,
+        channelName: (params.dailyStatusChannelName as string | undefined) ?? dailyDefaults.defaultChannelName ?? "primary",
+        agentId: (params.dailyStatusAgentId as string | undefined) ?? dailyDefaults.defaultAgentId ?? ownerAgentId,
+      };
 
       if (!workspaceDir) {
         throw new Error("No workspace directory available in tool context");
@@ -215,6 +240,13 @@ export function createProjectRegisterTool() {
         if (!existing.ownerAgentId && ownerAgentId) {
           existing.ownerAgentId = ownerAgentId;
         }
+        if (!existing.dailyStatus) {
+          existing.dailyStatus = { ...dailyStatus };
+        } else {
+          existing.dailyStatus.enabled = dailyStatus.enabled;
+          existing.dailyStatus.channelName = dailyStatus.channelName;
+          existing.dailyStatus.agentId = dailyStatus.agentId;
+        }
         if (repoRemote && !existing.repoRemote) {
           existing.repoRemote = repoRemote;
         }
@@ -246,6 +278,7 @@ export function createProjectRegisterTool() {
           deployBranch,
           channels: [newChannel],
           provider: providerType,
+          dailyStatus,
           workers,
         };
       }
@@ -294,6 +327,7 @@ export function createProjectRegisterTool() {
         labelsCreated: 10,
         promptsScaffolded: promptsCreated,
         isNewProject: !existing,
+        dailyStatus,
         activeWorkflow,
         announcement,
       });

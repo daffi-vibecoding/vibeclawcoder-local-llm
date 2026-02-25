@@ -55,6 +55,30 @@
           },
           "workerComplete": {
             "type": "boolean"
+          },
+          "dailyStatus": {
+            "type": "boolean"
+          }
+        }
+      },
+      "daily_status": {
+        "type": "object",
+        "description": "Scheduled daily project status report settings.",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "hourLocal": {
+            "type": "number"
+          },
+          "minuteLocal": {
+            "type": "number"
+          },
+          "defaultChannelName": {
+            "type": "string"
+          },
+          "defaultAgentId": {
+            "type": "string"
           }
         }
       },

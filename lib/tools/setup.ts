@@ -55,6 +55,26 @@ export function createSetupTool(api: OpenClawPluginApi) {
           enum: Object.values(ExecutionMode),
           description: "Project execution mode. Default: parallel.",
         },
+        dailyStatusEnabled: {
+          type: "boolean",
+          description: "Enable scheduled daily project status reports. Default: true.",
+        },
+        dailyStatusHour: {
+          type: "number",
+          description: "Daily status local hour (0-23). Default: 12.",
+        },
+        dailyStatusMinute: {
+          type: "number",
+          description: "Daily status local minute (0-59). Default: 0.",
+        },
+        dailyStatusChannelName: {
+          type: "string",
+          description: "Default project channel name for daily status (e.g. 'primary').",
+        },
+        dailyStatusAgentId: {
+          type: "string",
+          description: "Default owning agent ID for daily status posting.",
+        },
       },
     },
 
@@ -71,6 +91,13 @@ export function createSetupTool(api: OpenClawPluginApi) {
         projectExecution: params.projectExecution as
           | ExecutionMode
           | undefined,
+        dailyStatus: {
+          enabled: params.dailyStatusEnabled as boolean | undefined,
+          hourLocal: params.dailyStatusHour as number | undefined,
+          minuteLocal: params.dailyStatusMinute as number | undefined,
+          defaultChannelName: params.dailyStatusChannelName as string | undefined,
+          defaultAgentId: params.dailyStatusAgentId as string | undefined,
+        },
       });
 
       const lines = [
@@ -91,6 +118,12 @@ export function createSetupTool(api: OpenClawPluginApi) {
           lines.push(`  ${role}.${level}: ${model}`);
         }
       }
+      lines.push("");
+      lines.push("Daily status schedule:");
+      lines.push("  enabled: " + String(result.dailyStatus.enabled));
+      lines.push("  time: " + String(result.dailyStatus.hourLocal).padStart(2, "0") + ":" + String(result.dailyStatus.minuteLocal).padStart(2, "0"));
+      lines.push("  defaultChannel: " + result.dailyStatus.defaultChannelName);
+      lines.push("  defaultAgent: " + (result.dailyStatus.defaultAgentId ?? result.agentId));
       lines.push("");
 
       lines.push("Files:", ...result.filesWritten.map((f) => `  ${f}`));

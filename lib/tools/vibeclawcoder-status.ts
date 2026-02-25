@@ -126,9 +126,17 @@ async function safeQueueCounts(workspaceDir: string, project: Project): Promise<
         state: state.type === StateType.TERMINAL ? "closed" : "open",
       }).catch(() => []);
 
-      if (state.label.toLowerCase() === "doing") doing += issues.length;
-      if (state.label.toLowerCase() === "to do") todo += issues.length;
-      if (state.label.toLowerCase() === "refining") refining += issues.length;
+      if (state.type === StateType.ACTIVE) {
+        doing += issues.length;
+        continue;
+      }
+      if (state.type !== StateType.QUEUE) continue;
+      const label = state.label.toLowerCase();
+      if (label.includes("refin") || label.includes("improv")) {
+        refining += issues.length;
+      } else {
+        todo += issues.length;
+      }
     }
     return { doing, todo, refining };
   } catch {
@@ -156,17 +164,19 @@ function collectActiveWorkers(project: Project): ProjectStatus["activeWorkers"] 
   return out;
 }
 
-function snapshotPath(): string {
-  return path.join(process.env.HOME || "", ".openclaw", "vibeclawcoder-status", "latest.json");
+function snapshotPath(scope: Scope, projectFilter: string | null): string {
+  const safeScope = scope.replace(/[^a-z_]/gi, "_");
+  const safeProject = (projectFilter ?? "all").replace(/[^a-z0-9_-]/gi, "_");
+  return path.join(process.env.HOME || "", ".openclaw", "vibeclawcoder-status", `${safeScope}-${safeProject}.json`);
 }
 
-function ensureSnapshotDir(): void {
-  fs.mkdirSync(path.dirname(snapshotPath()), { recursive: true });
+function ensureSnapshotDir(scope: Scope, projectFilter: string | null): void {
+  fs.mkdirSync(path.dirname(snapshotPath(scope, projectFilter)), { recursive: true });
 }
 
-function readPreviousSnapshot(): Snapshot | null {
+function readPreviousSnapshot(scope: Scope, projectFilter: string | null): Snapshot | null {
   try {
-    const raw = fs.readFileSync(snapshotPath(), "utf-8");
+    const raw = fs.readFileSync(snapshotPath(scope, projectFilter), "utf-8");
     return JSON.parse(raw) as Snapshot;
   } catch {
     return null;
@@ -174,8 +184,8 @@ function readPreviousSnapshot(): Snapshot | null {
 }
 
 function writeSnapshot(snapshot: Snapshot): void {
-  ensureSnapshotDir();
-  fs.writeFileSync(snapshotPath(), JSON.stringify(snapshot, null, 2) + "\n", "utf-8");
+  ensureSnapshotDir(snapshot.scope, snapshot.projectFilter);
+  fs.writeFileSync(snapshotPath(snapshot.scope, snapshot.projectFilter), JSON.stringify(snapshot, null, 2) + "\n", "utf-8");
 }
 
 function diffSnapshots(current: Snapshot, previous: Snapshot | null): Record<string, unknown> {
@@ -302,7 +312,7 @@ export function createVibeClawCoderStatusTool(api: OpenClawPluginApi) {
         projectFilter: projectSlug,
         projects,
       };
-      const previous = readPreviousSnapshot();
+      const previous = readPreviousSnapshot(scope, projectSlug);
       const delta = diffSnapshots(snapshot, previous);
       if (saveSnapshot) writeSnapshot(snapshot);
 
@@ -323,7 +333,7 @@ export function createVibeClawCoderStatusTool(api: OpenClawPluginApi) {
         projects,
         ownerMismatches,
         delta,
-        snapshotPath: snapshotPath(),
+        snapshotPath: snapshotPath(scope, projectSlug),
       });
     },
   });

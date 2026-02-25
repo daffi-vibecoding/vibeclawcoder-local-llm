@@ -20,6 +20,9 @@ If an agent is installing this for someone else, ask these before touching confi
 3. Preferred max concurrent developers? (start with `1`, then `2`)
 4. Should local MiniMax be primary coding model? (recommended: yes)
 5. Which channels/groups should receive task updates?
+6. Which channel name should receive daily noon status posts? (default: `primary`)
+7. Which agent should post daily status updates? (default: selected setup agent)
+8. Keep daily status schedule at 12:00 local time? (recommended: yes)
 
 ### 1) Clone + build
 ```bash
@@ -153,7 +156,7 @@ Designed by a novice vibecoder for other novice vibecoders.
 
 ## Current fork stage
 
-✅ **MVP v1.0.8 (local-first) is live**
+✅ **MVP v1.0.9 (local-first) is live**
 
 For release notes, see [`CHANGELOG.md`](./CHANGELOG.md).
 
@@ -171,6 +174,7 @@ This fork now includes:
 - early-PR discipline in worker task prompts (open/link PR after first meaningful commit)
 - hard ownership enforcement in mutation tools (`work_start` / `work_finish`) based on project owner
 - global `vibeclawcoder_status` tool to report all active VibeClaw agents/projects from any agent session
+- scheduled daily project status reporting at local noon (defaults to project `primary` channel + owner agent, configurable in `setup`/`project_register`)
 
 
 ## Planned minimal workflow

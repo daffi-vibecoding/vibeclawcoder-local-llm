@@ -132,9 +132,15 @@ Ask: "Do you want to configure VibeClawCoder for the current agent, or create a 
    - If they want different provider → go back to step 3
 
 **Step 3: Run Setup**
+Before calling \`setup\`, ask:
+- "Should daily status reports be enabled?" (default: yes)
+- "Which channel name should receive daily status reports?" (default: \`primary\`)
+- "Which agent ID should post daily status reports?" (default: selected orchestrator agent)
+- "What time should it post daily status?" (default: 12:00 local time)
+
 Call \`setup\` with the collected answers:
-- Current agent: \`setup({})\` or \`setup({ models: { developer: { ... }, tester: { ... } } })\`
-- New agent: \`setup({ newAgentName: "<name>", channelBinding: "telegram"|"whatsapp"|null, migrateFrom: "<agentId>"|null, models: { ... } })\`
+- Current agent: \`setup({})\` or \`setup({ models: { developer: { ... }, tester: { ... } }, dailyStatusChannelName: "primary", dailyStatusAgentId: "<agentId>" })\`
+- New agent: \`setup({ newAgentName: "<name>", channelBinding: "telegram"|"whatsapp"|null, migrateFrom: "<agentId>"|null, models: { ... }, dailyStatusChannelName: "primary", dailyStatusAgentId: "<agentId>" })\`
   - \`migrateFrom\`: Include if user wants to migrate an existing channel-wide binding
 
 **Step 4: Telegram Group Setup (IMPORTANT)**

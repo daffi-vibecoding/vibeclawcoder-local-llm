@@ -84,6 +84,11 @@ export type NotifyEvent =
       issueUrl: string;
       issueTitle: string;
       prUrl?: string;
+    }
+  | {
+      type: "dailyStatus";
+      project: string;
+      summary: string;
     };
 
 /**
@@ -243,6 +248,10 @@ function buildMessage(event: NotifyEvent): string {
       msg += `\n📋 [Issue #${event.issueId}](${event.issueUrl})`;
       msg += `\n→ Moving to To Improve for developer attention`;
       return msg;
+    }
+
+    case "dailyStatus": {
+      return `🕛 Daily status for ${event.project}\n${event.summary}`;
     }
   }
 }
