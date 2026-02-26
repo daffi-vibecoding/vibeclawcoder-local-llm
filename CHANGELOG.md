@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+## v1.1.2 - 2026-02-26
+
+- feat: enforce strict developer completion quality gate (`build` + `test`) before `work_finish(done)` transition
+- feat: auto-enforce `review:human` routing for architecture-tagged issues (mandatory architecture review)
+- feat: add heartbeat `worker_pattern_guard` to escalate repeated terminate/no-progress patterns to `Refining`
+- feat: support placeholder model tokens in `workflow.yaml` defaults with runtime fallback to registry models
+- docs: update default workflow/README model placeholders for GitHub app version templates
+
 ## v1.1.1 - 2026-02-26
 
 - feat: add `refining_triage.humanNotifyThreshold` (default `5`) to alert project channels when HUMAN INPUT queue crosses threshold
