@@ -115,6 +115,7 @@ function ensureHeartbeatDefaults(config: Record<string, unknown>): void {
       maxPerTick: 6,
       sessionKey: "vibeclawcoder-refining-triage",
       humanInputLabel: "human-input",
+      humanNotifyThreshold: 5,
     };
   }
 }

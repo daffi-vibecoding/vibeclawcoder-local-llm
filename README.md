@@ -156,7 +156,7 @@ Designed by a novice vibecoder for other novice vibecoders.
 
 ## Current fork stage
 
-✅ **MVP v1.0.9 (local-first) is live**
+✅ **MVP v1.1.0 (local-first) is live**
 
 For release notes, see [`CHANGELOG.md`](./CHANGELOG.md).
 
@@ -176,6 +176,7 @@ This fork now includes:
 - global `vibeclawcoder_status` tool to report all active VibeClaw agents/projects from any agent session
 - scheduled daily project status reporting at local noon (defaults to project `primary` channel + owner agent, configurable in `setup`/`project_register`)
 - automated refining backlog triage: when open `Refining` reaches threshold (default `10`), reviewer-model triage moves items to `To Do` or docks them for `HUMAN INPUT`
+- human-input queue alerting: when open `human-input` reaches threshold (default `5`), one channel alert posts links + required human decision text for each item; alerts reset only after queue drops below threshold
 
 
 ## Planned minimal workflow

@@ -89,6 +89,19 @@ export type NotifyEvent =
       type: "dailyStatus";
       project: string;
       summary: string;
+    }
+  | {
+      type: "humanInputQueue";
+      project: string;
+      queueSize: number;
+      threshold: number;
+      label: string;
+      issues: Array<{
+        id: number;
+        title: string;
+        url: string;
+        decision: string;
+      }>;
     };
 
 /**
@@ -252,6 +265,17 @@ function buildMessage(event: NotifyEvent): string {
 
     case "dailyStatus": {
       return `🕛 Daily status for ${event.project}\n${event.summary}`;
+    }
+
+    case "humanInputQueue": {
+      let msg = `🧭 Human input queue reached ${event.queueSize} (threshold ${event.threshold}) for ${event.project}`;
+      msg += `\nLabel: ${event.label}`;
+      msg += `\nHuman decisions needed:`;
+      for (const issue of event.issues) {
+        msg += `\n- [#${issue.id}: ${issue.title}](${issue.url})`;
+        msg += `\n  Decide: ${issue.decision}`;
+      }
+      return msg;
     }
   }
 }

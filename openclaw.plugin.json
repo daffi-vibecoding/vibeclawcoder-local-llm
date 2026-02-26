@@ -58,6 +58,9 @@
           },
           "dailyStatus": {
             "type": "boolean"
+          },
+          "humanInputQueue": {
+            "type": "boolean"
           }
         }
       },
@@ -118,6 +121,9 @@
           },
           "humanInputLabel": {
             "type": "string"
+          },
+          "humanNotifyThreshold": {
+            "type": "number"
           }
         }
       }

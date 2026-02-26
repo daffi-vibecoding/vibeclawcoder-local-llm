@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v1.1.0 - 2026-02-26
+
+- feat: add `refining_triage.humanNotifyThreshold` (default `5`) to alert project channels when HUMAN INPUT queue crosses threshold
+- feat: include per-issue links and explicit human decision prompts in `humanInputQueue` notifications
+- fix: add threshold-crossing alert state to prevent repeated spam while queue remains above threshold
+- chore: expose `notifications.humanInputQueue` toggle in plugin config schema
+
 ## v1.0.11 - 2026-02-25
 
 - feat: add `refining_triage` heartbeat pass (threshold default `10`) using reviewer-model lane to auto-move Refining issues to `To Do` or dock for `HUMAN INPUT`

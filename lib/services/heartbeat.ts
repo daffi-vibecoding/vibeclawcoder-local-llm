@@ -62,6 +62,7 @@ type RefiningTriageConfig = {
   sessionKey: string;
   model?: string;
   humanInputLabel: string;
+  humanNotifyThreshold: number;
 };
 
 type Agent = {
@@ -113,6 +114,7 @@ export const REFINING_TRIAGE_DEFAULTS: RefiningTriageConfig = {
   maxPerTick: 6,
   sessionKey: "vibeclawcoder-refining-triage",
   humanInputLabel: "human-input",
+  humanNotifyThreshold: 5,
 };
 
 export function resolveHeartbeatConfig(
@@ -149,6 +151,7 @@ export function resolveRefiningTriageConfig(
     maxPerTick: Math.max(1, Number(raw.maxPerTick ?? REFINING_TRIAGE_DEFAULTS.maxPerTick)),
     sessionKey: String(raw.sessionKey ?? REFINING_TRIAGE_DEFAULTS.sessionKey),
     humanInputLabel: String(raw.humanInputLabel ?? REFINING_TRIAGE_DEFAULTS.humanInputLabel),
+    humanNotifyThreshold: Math.max(1, Number(raw.humanNotifyThreshold ?? REFINING_TRIAGE_DEFAULTS.humanNotifyThreshold)),
     model: raw.model ? String(raw.model) : undefined,
   };
 }
@@ -474,6 +477,14 @@ export async function tick(opts: {
       result.totalRefiningTriaged += await performRefiningTriagePass(
         workspaceDir, project, provider, resolvedConfig, pluginConfig,
       );
+      await performHumanInputQueueAlert(
+        workspaceDir,
+        project,
+        provider,
+        pluginConfig,
+        runtime,
+        agentId,
+      );
 
       // Budget check: stop if we've hit the limit
       const remaining = config.maxPickupsPerTick - result.totalPickups;
@@ -738,8 +749,16 @@ type DailyStatusState = {
   sent: Record<string, string>;
 };
 
+type HumanInputAlertState = {
+  alerted: Record<string, boolean>;
+};
+
 function dailyStatusStatePath(workspaceDir: string): string {
   return path.join(workspaceDir, DATA_DIR, "daily-status-state.json");
+}
+
+function humanInputAlertStatePath(workspaceDir: string): string {
+  return path.join(workspaceDir, DATA_DIR, "human-input-alert-state.json");
 }
 
 async function readDailyStatusState(workspaceDir: string): Promise<DailyStatusState> {
@@ -758,6 +777,118 @@ async function writeDailyStatusState(workspaceDir: string, state: DailyStatusSta
   await fs.promises.mkdir(path.dirname(file), { recursive: true });
   await fs.promises.writeFile(tmp, JSON.stringify(state, null, 2) + "\n", "utf-8");
   await fs.promises.rename(tmp, file);
+}
+
+async function readHumanInputAlertState(workspaceDir: string): Promise<HumanInputAlertState> {
+  try {
+    const raw = await fs.promises.readFile(humanInputAlertStatePath(workspaceDir), "utf-8");
+    const parsed = JSON.parse(raw) as HumanInputAlertState;
+    return parsed && typeof parsed === "object" && parsed.alerted ? parsed : { alerted: {} };
+  } catch {
+    return { alerted: {} };
+  }
+}
+
+async function writeHumanInputAlertState(workspaceDir: string, state: HumanInputAlertState): Promise<void> {
+  const file = humanInputAlertStatePath(workspaceDir);
+  const tmp = file + ".tmp";
+  await fs.promises.mkdir(path.dirname(file), { recursive: true });
+  await fs.promises.writeFile(tmp, JSON.stringify(state, null, 2) + "\n", "utf-8");
+  await fs.promises.rename(tmp, file);
+}
+
+function truncateSingleLine(text: string, max = 180): string {
+  const cleaned = text.replace(/\s+/g, " ").trim();
+  if (!cleaned) return "Decide whether this can return to To Do or must stay blocked for human input.";
+  return cleaned.length > max ? `${cleaned.slice(0, max - 3)}...` : cleaned;
+}
+
+async function latestHumanDecisionReason(
+  provider: import("../providers/provider.js").IssueProvider,
+  issueId: number,
+): Promise<string> {
+  const comments = await provider.listComments(issueId).catch(() => []);
+  for (let idx = comments.length - 1; idx >= 0; idx--) {
+    const body = String(comments[idx]?.body ?? "");
+    if (!body.toLowerCase().includes("human input")) continue;
+    const match = body.match(/Reason:\s*([\s\S]*)$/i);
+    if (match?.[1]) return truncateSingleLine(match[1]);
+  }
+  return "Decide whether this is still blocked on product/business/legal input, or can move back to To Do.";
+}
+
+async function performHumanInputQueueAlert(
+  workspaceDir: string,
+  project: Project,
+  provider: import("../providers/provider.js").IssueProvider,
+  pluginConfig: Record<string, unknown> | undefined,
+  runtime: PluginRuntime | undefined,
+  runningAgentId?: string,
+): Promise<void> {
+  const cfg = resolveRefiningTriageConfig(pluginConfig);
+  if (!cfg.enabled) return;
+
+  const dailyCfg = resolveDailyStatusConfig(pluginConfig);
+  const projectCfg = project.dailyStatus ?? {};
+  const ownerAgent =
+    projectCfg.agentId ??
+    dailyCfg.defaultAgentId ??
+    project.ownerAgentId ??
+    project.channels[0]?.accountId;
+  if (ownerAgent && runningAgentId && ownerAgent !== runningAgentId) return;
+
+  const channelName = projectCfg.channelName ?? dailyCfg.defaultChannelName;
+  const target = project.channels.find((ch) => ch.name === channelName) ?? project.channels[0];
+  if (!target?.groupId) return;
+
+  const issues = await provider.listIssues({ label: cfg.humanInputLabel, state: "open" }).catch(() => []);
+  const key = `${project.slug}:${target.channel}:${target.groupId}:${cfg.humanInputLabel}:${cfg.humanNotifyThreshold}`;
+  const state = await readHumanInputAlertState(workspaceDir);
+  const alreadyAlerted = state.alerted[key] === true;
+
+  if (issues.length < cfg.humanNotifyThreshold) {
+    if (alreadyAlerted) {
+      state.alerted[key] = false;
+      await writeHumanInputAlertState(workspaceDir, state);
+    }
+    return;
+  }
+
+  if (alreadyAlerted) return;
+
+  const top = issues.slice(0, 20);
+  const details = await Promise.all(
+    top.map(async (issue) => ({
+      id: issue.iid,
+      title: issue.title,
+      url: issue.web_url,
+      decision: await latestHumanDecisionReason(provider, issue.iid),
+    })),
+  );
+
+  const notifyConfig = getNotificationConfig(pluginConfig);
+  const sent = await notify(
+    {
+      type: "humanInputQueue",
+      project: project.name,
+      queueSize: issues.length,
+      threshold: cfg.humanNotifyThreshold,
+      label: cfg.humanInputLabel,
+      issues: details,
+    },
+    {
+      workspaceDir,
+      config: notifyConfig,
+      groupId: target.groupId,
+      channel: target.channel,
+      runtime,
+      accountId: target.accountId,
+    },
+  );
+  if (!sent) return;
+
+  state.alerted[key] = true;
+  await writeHumanInputAlertState(workspaceDir, state);
 }
 
 function localDateStamp(now: Date): string {

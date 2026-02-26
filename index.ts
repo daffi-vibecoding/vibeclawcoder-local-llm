@@ -50,6 +50,7 @@ const plugin = {
           workerStart: { type: "boolean", default: true },
           workerComplete: { type: "boolean", default: true },
           dailyStatus: { type: "boolean", default: true },
+          humanInputQueue: { type: "boolean", default: true },
         },
       },
       daily_status: {
@@ -138,6 +139,12 @@ const plugin = {
             type: "string",
             default: "human-input",
             description: "Non-state label added when issue is docked for human input.",
+          },
+          humanNotifyThreshold: {
+            type: "number",
+            default: 5,
+            description:
+              "When open HUMAN INPUT queue reaches this count, send one project-channel alert until it drops below threshold.",
           },
         },
       },
