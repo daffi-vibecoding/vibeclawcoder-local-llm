@@ -80,6 +80,7 @@ export function createSyncLabelsTool() {
           const { provider } = await createProvider({
             repo: project.repo,
             provider: project.provider,
+            repoRemote: project.repoRemote,
           });
 
           // State labels from the resolved workflow (not DEFAULT_WORKFLOW)
