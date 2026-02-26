@@ -96,6 +96,30 @@
             "type": "number"
           }
         }
+      },
+      "refining_triage": {
+        "type": "object",
+        "description": "Automated refining backlog triage using the reviewer model lane.",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "threshold": {
+            "type": "number"
+          },
+          "maxPerTick": {
+            "type": "number"
+          },
+          "model": {
+            "type": "string"
+          },
+          "sessionKey": {
+            "type": "string"
+          },
+          "humanInputLabel": {
+            "type": "string"
+          }
+        }
       }
     }
   }

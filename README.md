@@ -175,6 +175,7 @@ This fork now includes:
 - hard ownership enforcement in mutation tools (`work_start` / `work_finish`) based on project owner
 - global `vibeclawcoder_status` tool to report all active VibeClaw agents/projects from any agent session
 - scheduled daily project status reporting at local noon (defaults to project `primary` channel + owner agent, configurable in `setup`/`project_register`)
+- automated refining backlog triage: when open `Refining` reaches threshold (default `10`), reviewer-model triage moves items to `To Do` or docks them for `HUMAN INPUT`
 
 
 ## Planned minimal workflow

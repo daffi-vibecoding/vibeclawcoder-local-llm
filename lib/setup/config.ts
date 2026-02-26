@@ -108,6 +108,15 @@ function ensureHeartbeatDefaults(config: Record<string, unknown>): void {
   if (!vibeclawcoder.work_heartbeat) {
     vibeclawcoder.work_heartbeat = { ...HEARTBEAT_DEFAULTS };
   }
+  if (!vibeclawcoder.refining_triage) {
+    vibeclawcoder.refining_triage = {
+      enabled: true,
+      threshold: 10,
+      maxPerTick: 6,
+      sessionKey: "vibeclawcoder-refining-triage",
+      humanInputLabel: "human-input",
+    };
+  }
 }
 
 function ensureDailyStatusDefaults(

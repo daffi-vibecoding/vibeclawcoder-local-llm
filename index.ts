@@ -105,6 +105,42 @@ const plugin = {
           },
         },
       },
+      refining_triage: {
+        type: "object",
+        description:
+          "When Refining backlog gets large, run a dedicated model triage pass to move items back to To Do or dock for HUMAN INPUT.",
+        properties: {
+          enabled: {
+            type: "boolean",
+            default: true,
+            description: "Enable automated refining backlog triage.",
+          },
+          threshold: {
+            type: "number",
+            default: 10,
+            description: "Run triage when open Refining count is at least this value.",
+          },
+          maxPerTick: {
+            type: "number",
+            default: 6,
+            description: "Max Refining issues triaged per heartbeat tick.",
+          },
+          model: {
+            type: "string",
+            description: "Optional dedicated model for triage; defaults to the reviewer role model.",
+          },
+          sessionKey: {
+            type: "string",
+            default: "vibeclawcoder-refining-triage",
+            description: "Session key used for triage model calls.",
+          },
+          humanInputLabel: {
+            type: "string",
+            default: "human-input",
+            description: "Non-state label added when issue is docked for human input.",
+          },
+        },
+      },
     },
   },
 

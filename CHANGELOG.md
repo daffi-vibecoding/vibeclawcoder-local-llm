@@ -10,6 +10,7 @@
 - fix: heartbeat startup now respects configured `work_heartbeat.intervalSeconds`
 - feat: add scheduled `daily_status` reports (default local noon) with setup-time default channel/agent selection and project-level overrides
 - fix: improve `vibeclawcoder_status` queue math for custom workflows and scope-specific snapshot deltas
+- feat: add `refining_triage` heartbeat pass (threshold default `10`) using reviewer-model lane to auto-move Refining issues to `To Do` or dock for `HUMAN INPUT`
 
 ## v1.0.8 - 2026-02-25
 

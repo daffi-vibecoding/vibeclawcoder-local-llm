@@ -35,6 +35,7 @@ import type { ResolvedConfig } from "../config/types.js";
 import { ExecutionMode, resolveNotifyChannel, StateType } from "../workflow.js";
 import { notify, getNotificationConfig } from "../notify.js";
 import { projectOwnedByAgent } from "../ownership.js";
+import { runCommand } from "../run-command.js";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,6 +55,15 @@ type DailyStatusConfig = {
   defaultAgentId?: string;
 };
 
+type RefiningTriageConfig = {
+  enabled: boolean;
+  threshold: number;
+  maxPerTick: number;
+  sessionKey: string;
+  model?: string;
+  humanInputLabel: string;
+};
+
 type Agent = {
   agentId: string;
   workspace: string;
@@ -66,6 +76,7 @@ type TickResult = {
   totalReviewTransitions: number;
   totalReviewSkipTransitions: number;
   totalTestSkipTransitions: number;
+  totalRefiningTriaged: number;
 };
 
 type ServiceContext = {
@@ -96,6 +107,14 @@ export const DAILY_STATUS_DEFAULTS: DailyStatusConfig = {
   defaultChannelName: "primary",
 };
 
+export const REFINING_TRIAGE_DEFAULTS: RefiningTriageConfig = {
+  enabled: true,
+  threshold: 10,
+  maxPerTick: 6,
+  sessionKey: "vibeclawcoder-refining-triage",
+  humanInputLabel: "human-input",
+};
+
 export function resolveHeartbeatConfig(
   pluginConfig?: Record<string, unknown>,
 ): HeartbeatConfig {
@@ -116,6 +135,21 @@ export function resolveDailyStatusConfig(
     minuteLocal: Math.max(0, Math.min(59, Number(raw.minuteLocal ?? DAILY_STATUS_DEFAULTS.minuteLocal))),
     defaultChannelName: String(raw.defaultChannelName ?? DAILY_STATUS_DEFAULTS.defaultChannelName),
     defaultAgentId: raw.defaultAgentId ? String(raw.defaultAgentId) : undefined,
+  };
+}
+
+export function resolveRefiningTriageConfig(
+  pluginConfig?: Record<string, unknown>,
+): RefiningTriageConfig {
+  const raw = (pluginConfig?.refining_triage ?? {}) as Partial<RefiningTriageConfig>;
+  return {
+    ...REFINING_TRIAGE_DEFAULTS,
+    ...raw,
+    threshold: Math.max(1, Number(raw.threshold ?? REFINING_TRIAGE_DEFAULTS.threshold)),
+    maxPerTick: Math.max(1, Number(raw.maxPerTick ?? REFINING_TRIAGE_DEFAULTS.maxPerTick)),
+    sessionKey: String(raw.sessionKey ?? REFINING_TRIAGE_DEFAULTS.sessionKey),
+    humanInputLabel: String(raw.humanInputLabel ?? REFINING_TRIAGE_DEFAULTS.humanInputLabel),
+    model: raw.model ? String(raw.model) : undefined,
   };
 }
 
@@ -254,6 +288,7 @@ async function processAllAgents(
     totalReviewTransitions: 0,
     totalReviewSkipTransitions: 0,
     totalTestSkipTransitions: 0,
+    totalRefiningTriaged: 0,
   };
 
   // Auto-upgrade workspaces on version change (runs once per version stamp mismatch)
@@ -303,6 +338,7 @@ async function processAllAgents(
     result.totalReviewTransitions += agentResult.totalReviewTransitions;
     result.totalReviewSkipTransitions += agentResult.totalReviewSkipTransitions;
     result.totalTestSkipTransitions += agentResult.totalTestSkipTransitions;
+    result.totalRefiningTriaged += agentResult.totalRefiningTriaged;
   }
 
   return result;
@@ -320,10 +356,11 @@ function logTickResult(
     result.totalHealthFixes > 0 ||
     result.totalReviewTransitions > 0 ||
     result.totalReviewSkipTransitions > 0 ||
-    result.totalTestSkipTransitions > 0
+    result.totalTestSkipTransitions > 0 ||
+    result.totalRefiningTriaged > 0
   ) {
     logger.info(
-      `work_heartbeat tick: ${result.totalPickups} pickups, ${result.totalHealthFixes} health fixes, ${result.totalReviewTransitions} review transitions, ${result.totalReviewSkipTransitions} review skips, ${result.totalTestSkipTransitions} test skips, ${result.totalSkipped} skipped`,
+      `work_heartbeat tick: ${result.totalPickups} pickups, ${result.totalHealthFixes} health fixes, ${result.totalReviewTransitions} review transitions, ${result.totalReviewSkipTransitions} review skips, ${result.totalTestSkipTransitions} test skips, ${result.totalRefiningTriaged} refining triaged, ${result.totalSkipped} skipped`,
     );
   }
 }
@@ -369,6 +406,7 @@ export async function tick(opts: {
       totalReviewTransitions: 0,
       totalReviewSkipTransitions: 0,
       totalTestSkipTransitions: 0,
+      totalRefiningTriaged: 0,
     };
   }
 
@@ -379,6 +417,7 @@ export async function tick(opts: {
     totalReviewTransitions: 0,
     totalReviewSkipTransitions: 0,
     totalTestSkipTransitions: 0,
+    totalRefiningTriaged: 0,
   };
 
   const projectExecution =
@@ -432,6 +471,10 @@ export async function tick(opts: {
         workspaceDir, slug, provider, resolvedConfig,
       );
 
+      result.totalRefiningTriaged += await performRefiningTriagePass(
+        workspaceDir, project, provider, resolvedConfig, pluginConfig,
+      );
+
       // Budget check: stop if we've hit the limit
       const remaining = config.maxPickupsPerTick - result.totalPickups;
       if (remaining <= 0) break;
@@ -478,11 +521,217 @@ export async function tick(opts: {
     reviewTransitions: result.totalReviewTransitions,
     reviewSkipTransitions: result.totalReviewSkipTransitions,
     testSkipTransitions: result.totalTestSkipTransitions,
+    refiningTriaged: result.totalRefiningTriaged,
     pickups: result.totalPickups,
     skipped: result.totalSkipped,
   });
 
   return result;
+}
+
+type RefiningDecision = {
+  decision: "todo" | "human_input";
+  reason: string;
+  confidence?: number;
+};
+
+function findRefiningLabel(workflow: ResolvedConfig["workflow"]): string | null {
+  const explicit = Object.values(workflow.states).find(
+    (s) => s.type === StateType.HOLD && s.label.toLowerCase().includes("refin"),
+  );
+  return explicit?.label ?? null;
+}
+
+function findTodoLabel(workflow: ResolvedConfig["workflow"]): string | null {
+  const todo = Object.values(workflow.states).find(
+    (s) => s.type === StateType.QUEUE && s.role === "developer" && s.label.toLowerCase().includes("to do"),
+  );
+  if (todo) return todo.label;
+  const firstDevQueue = Object.values(workflow.states).find(
+    (s) => s.type === StateType.QUEUE && s.role === "developer",
+  );
+  return firstDevQueue?.label ?? null;
+}
+
+function findHumanDockLabel(workflow: ResolvedConfig["workflow"]): string | null {
+  const initial = workflow.states[workflow.initial];
+  if (initial?.type === StateType.HOLD) return initial.label;
+  const planning = Object.values(workflow.states).find(
+    (s) => s.type === StateType.HOLD && s.label.toLowerCase().includes("plan"),
+  );
+  return planning?.label ?? null;
+}
+
+function parseAgentPayload(output: string): string {
+  const lines = output.trim().split("\n");
+  const jsonStart = lines.findIndex((line) => line.trim().startsWith("{"));
+  if (jsonStart === -1) throw new Error("No JSON envelope found in agent output");
+  const envelope = JSON.parse(lines.slice(jsonStart).join("\n"));
+  const payloads = envelope.result?.payloads ?? envelope.payloads;
+  if (!Array.isArray(payloads) || payloads.length === 0 || !payloads[0]?.text) {
+    throw new Error("No payload text found in agent response");
+  }
+  return String(payloads[0].text);
+}
+
+function parseDecision(text: string): RefiningDecision {
+  const clean = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+  const raw = JSON.parse(clean) as Partial<RefiningDecision>;
+  if (raw.decision !== "todo" && raw.decision !== "human_input") {
+    throw new Error(`Invalid decision "${String(raw.decision)}"`);
+  }
+  return {
+    decision: raw.decision,
+    reason: String(raw.reason ?? "No reason provided"),
+    confidence: raw.confidence != null ? Number(raw.confidence) : undefined,
+  };
+}
+
+function heuristicDecision(issue: { title: string; description: string; labels: string[] }): RefiningDecision {
+  const blob = `${issue.title}\n${issue.description}\n${issue.labels.join(" ")}`.toLowerCase();
+  const humanSignals = [
+    "human input",
+    "needs decision",
+    "awaiting",
+    "waiting on",
+    "product decision",
+    "legal",
+    "policy",
+    "security review",
+    "manual qa",
+    "blocked by",
+  ];
+  const needsHuman = humanSignals.some((s) => blob.includes(s));
+  if (needsHuman) {
+    return { decision: "human_input", reason: "Heuristic fallback: issue indicates external/human decision dependency." };
+  }
+  return { decision: "todo", reason: "Heuristic fallback: no explicit human-dependency markers; safe to re-queue." };
+}
+
+function pickRefiningTriageModel(cfg: RefiningTriageConfig, resolvedConfig: ResolvedConfig): string | null {
+  if (cfg.model) return cfg.model;
+  const reviewer = resolvedConfig.roles.reviewer;
+  if (reviewer) {
+    const lvl = reviewer.defaultLevel ?? Object.keys(reviewer.models)[0];
+    if (lvl && reviewer.models[lvl]) return reviewer.models[lvl];
+  }
+  const firstRole = Object.values(resolvedConfig.roles)[0];
+  if (firstRole) {
+    const lvl = firstRole.defaultLevel ?? Object.keys(firstRole.models)[0];
+    if (lvl && firstRole.models[lvl]) return firstRole.models[lvl];
+  }
+  return null;
+}
+
+async function decideRefiningIssue(
+  issue: import("../providers/provider.js").Issue,
+  provider: import("../providers/provider.js").IssueProvider,
+  cfg: RefiningTriageConfig,
+  resolvedConfig: ResolvedConfig,
+): Promise<RefiningDecision> {
+  const comments = await provider.listComments(issue.iid).catch(() => []);
+  const latestComments = comments.slice(-3).map((c) => `- ${c.author}: ${c.body}`).join("\n");
+  const prompt = `You are triaging backlog issues currently in Refining.
+Return ONLY JSON: {"decision":"todo"|"human_input","reason":"...","confidence":0.0-1.0}
+
+Rules:
+1) Use "todo" when this can be resumed by an engineer without new human decisions.
+2) Use "human_input" only if blocked on product/legal/business/manual approval or missing required human clarification.
+3) Bias toward "todo" to keep throughput high.
+
+Issue #${issue.iid}: ${issue.title}
+Labels: ${issue.labels.join(", ")}
+Description:
+${(issue.description ?? "").slice(0, 4000)}
+
+Recent comments:
+${latestComments || "(none)"}
+`;
+
+  try {
+    const model = pickRefiningTriageModel(cfg, resolvedConfig);
+    if (model) {
+      await runCommand(
+        ["openclaw", "gateway", "call", "sessions.patch", "--params", JSON.stringify({ key: cfg.sessionKey, model, label: "Refining Triage" })],
+        { timeoutMs: 20_000 },
+      );
+    }
+    const result = await runCommand(
+      ["openclaw", "agent", "--session-id", cfg.sessionKey, "--message", prompt, "--json"],
+      { timeoutMs: 60_000 },
+    );
+    return parseDecision(parseAgentPayload(result.stdout ?? ""));
+  } catch {
+    return heuristicDecision(issue);
+  }
+}
+
+async function performRefiningTriagePass(
+  workspaceDir: string,
+  project: Project,
+  provider: import("../providers/provider.js").IssueProvider,
+  resolvedConfig: ResolvedConfig,
+  pluginConfig: Record<string, unknown> | undefined,
+): Promise<number> {
+  const cfg = resolveRefiningTriageConfig(pluginConfig);
+  if (!cfg.enabled) return 0;
+
+  const refiningLabel = findRefiningLabel(resolvedConfig.workflow);
+  const todoLabel = findTodoLabel(resolvedConfig.workflow);
+  if (!refiningLabel || !todoLabel) return 0;
+
+  const refiningIssues = await provider.listIssues({ label: refiningLabel, state: "open" }).catch(() => []);
+  if (refiningIssues.length < cfg.threshold) return 0;
+
+  const humanDockLabel = findHumanDockLabel(resolvedConfig.workflow) ?? refiningLabel;
+  const toProcess = refiningIssues.slice(0, cfg.maxPerTick);
+
+  await provider.ensureLabel(cfg.humanInputLabel, "#95a5a6").catch(() => {});
+
+  let moved = 0;
+  for (const issue of toProcess) {
+    try {
+      const decision = await decideRefiningIssue(issue, provider, cfg, resolvedConfig);
+      if (decision.decision === "todo") {
+        await provider.transitionLabel(issue.iid, refiningLabel, todoLabel);
+        await provider.removeLabels(issue.iid, [cfg.humanInputLabel]).catch(() => {});
+        await provider.addComment(
+          issue.iid,
+          `Auto-triage (refining backlog): moved to **${todoLabel}**.\nReason: ${decision.reason}`,
+        ).catch(() => {});
+        moved++;
+      } else {
+        if (humanDockLabel !== refiningLabel) {
+          await provider.transitionLabel(issue.iid, refiningLabel, humanDockLabel);
+        }
+        await provider.addLabel(issue.iid, cfg.humanInputLabel).catch(() => {});
+        await provider.addComment(
+          issue.iid,
+          `Auto-triage (refining backlog): docked for **HUMAN INPUT**.\nReason: ${decision.reason}`,
+        ).catch(() => {});
+      }
+    } catch (err) {
+      await auditLog(workspaceDir, "refining_triage_error", {
+        project: project.slug,
+        issue: issue.iid,
+        error: (err as Error).message ?? String(err),
+      }).catch(() => {});
+    }
+  }
+
+  if (toProcess.length > 0) {
+    await auditLog(workspaceDir, "refining_triage", {
+      project: project.slug,
+      threshold: cfg.threshold,
+      scanned: refiningIssues.length,
+      processed: toProcess.length,
+      movedToTodo: moved,
+      dockLabel: humanDockLabel,
+      humanInputLabel: cfg.humanInputLabel,
+    }).catch(() => {});
+  }
+
+  return moved;
 }
 
 type DailyStatusState = {
