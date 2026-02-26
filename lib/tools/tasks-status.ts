@@ -58,7 +58,11 @@ export function createTasksStatusTool(api: OpenClawPluginApi) {
           const project = data.projects[slug];
           if (!project) return null;
 
-          const { provider } = await createProvider({ repo: project.repo, provider: project.provider });
+          const { provider } = await createProvider({
+            repo: project.repo,
+            provider: project.provider,
+            repoRemote: project.repoRemote,
+          });
 
           // Fetch issues for each state type
           const hold: Record<string, { count: number; issues: IssueSummary[] }> = {};
