@@ -92,7 +92,11 @@ export function registerAttachmentHook(api: OpenClawPluginApi): void {
     // Process each referenced issue
     for (const issueId of issueIds) {
       try {
-        const { provider } = await createProvider({ repo: project.repo, provider: project.provider });
+        const { provider } = await createProvider({
+          repo: project.repo,
+          provider: project.provider,
+          repoRemote: project.repoRemote,
+        });
 
         await processAttachmentMessage({
           workspaceDir,
