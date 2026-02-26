@@ -156,7 +156,7 @@ Designed by a novice vibecoder for other novice vibecoders.
 
 ## Current fork stage
 
-✅ **MVP v1.1.0 (local-first) is live**
+✅ **MVP v1.1.1 (local-first) is live**
 
 For release notes, see [`CHANGELOG.md`](./CHANGELOG.md).
 

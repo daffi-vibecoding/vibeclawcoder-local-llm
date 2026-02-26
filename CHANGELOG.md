@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## v1.1.0 - 2026-02-26
+## v1.1.1 - 2026-02-26
 
 - feat: add `refining_triage.humanNotifyThreshold` (default `5`) to alert project channels when HUMAN INPUT queue crosses threshold
 - feat: include per-issue links and explicit human decision prompts in `humanInputQueue` notifications
