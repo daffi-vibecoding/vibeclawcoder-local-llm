@@ -18,6 +18,7 @@ import {
   getNextStateDescription,
   getCompletionEmoji,
   resolveNotifyChannel,
+  STEP_ROUTING_COLOR,
   type CompletionRule,
   type WorkflowConfig,
 } from "../workflow.js";
@@ -45,6 +46,135 @@ export function getRule(
   workflow: WorkflowConfig = DEFAULT_WORKFLOW,
 ): CompletionRule | undefined {
   return getCompletionRule(workflow, role, result) ?? undefined;
+}
+
+type QualityGateConfig = {
+  enabled: boolean;
+  buildCommand: string;
+  testCommand: string;
+  timeoutMs: number;
+};
+
+const QUALITY_GATE_DEFAULTS: QualityGateConfig = {
+  enabled: true,
+  buildCommand: "npm run build",
+  testCommand: "npm test",
+  timeoutMs: 20 * 60 * 1000,
+};
+
+const ARCHITECTURE_KEYWORDS = [
+  "architecture",
+  "architectural",
+  "system-design",
+  "infra",
+  "infrastructure",
+  "breaking-change",
+] as const;
+
+function resolveQualityGateConfig(
+  pluginConfig?: Record<string, unknown>,
+): QualityGateConfig {
+  const raw = (pluginConfig?.quality_gate ?? {}) as Partial<QualityGateConfig>;
+  return {
+    enabled: raw.enabled ?? QUALITY_GATE_DEFAULTS.enabled,
+    buildCommand: String(raw.buildCommand ?? QUALITY_GATE_DEFAULTS.buildCommand).trim(),
+    testCommand: String(raw.testCommand ?? QUALITY_GATE_DEFAULTS.testCommand).trim(),
+    timeoutMs: Math.max(5_000, Number(raw.timeoutMs ?? QUALITY_GATE_DEFAULTS.timeoutMs)),
+  };
+}
+
+function summarizeOutput(stdout?: string, stderr?: string): string {
+  const out = String(stdout ?? "").trim();
+  const err = String(stderr ?? "").trim();
+  const combined = [err, out].filter(Boolean).join("\n");
+  if (!combined) return "No command output.";
+  return combined.length > 1200 ? `${combined.slice(0, 1197)}...` : combined;
+}
+
+async function runQualityGateCommand(
+  stage: "build" | "test",
+  command: string,
+  repoPath: string,
+  timeoutMs: number,
+): Promise<void> {
+  const result = await runCommand(["sh", "-lc", command], {
+    cwd: repoPath,
+    timeoutMs,
+  });
+  const code = typeof result.code === "number" ? result.code : 0;
+  if (code !== 0) {
+    throw new Error(
+      `Quality gate failed at ${stage} stage.\n` +
+      `Command: ${command}\n` +
+      `Exit code: ${code}\n\n` +
+      summarizeOutput(result.stdout, result.stderr),
+    );
+  }
+}
+
+async function enforceDeveloperQualityGate(
+  role: string,
+  result: string,
+  repoPath: string,
+  pluginConfig: Record<string, unknown> | undefined,
+): Promise<QualityGateConfig | null> {
+  if (role !== "developer" || result !== "done") return null;
+  const cfg = resolveQualityGateConfig(pluginConfig);
+  if (!cfg.enabled) return cfg;
+
+  if (!cfg.buildCommand || !cfg.testCommand) {
+    throw new Error(
+      "Quality gate is enabled but build/test commands are missing. " +
+      "Set plugins.entries.vibeclawcoder.config.quality_gate.buildCommand and testCommand.",
+    );
+  }
+
+  await runQualityGateCommand("build", cfg.buildCommand, repoPath, cfg.timeoutMs);
+  await runQualityGateCommand("test", cfg.testCommand, repoPath, cfg.timeoutMs);
+  return cfg;
+}
+
+function isArchitectureIssue(issue: { labels: string[] }): boolean {
+  const labels = issue.labels.map((l) => l.toLowerCase());
+  return ARCHITECTURE_KEYWORDS.some((kw) => labels.some((l) => l === kw || l.includes(kw)));
+}
+
+function detectReviewRouting(labels: string[]): string | null {
+  const routing = labels.find((l) => l.toLowerCase().startsWith("review:"));
+  return routing ? routing.toLowerCase() : null;
+}
+
+async function enforceArchitectureReviewRouting(opts: {
+  role: string;
+  result: string;
+  issueId: number;
+  issue: { labels: string[] };
+  provider: IssueProvider;
+  workspaceDir: string;
+  projectName: string;
+}): Promise<boolean> {
+  const { role, result, issueId, issue, provider, workspaceDir, projectName } = opts;
+  if (role !== "developer" || result !== "done") return false;
+  if (!isArchitectureIssue(issue)) return false;
+
+  const routing = detectReviewRouting(issue.labels);
+  if (routing === "review:human") return false;
+
+  const toRemove = issue.labels.filter((l) => l.toLowerCase().startsWith("review:") && l.toLowerCase() !== "review:human");
+  await provider.ensureLabel("review:human", STEP_ROUTING_COLOR);
+  if (toRemove.length > 0) {
+    await provider.removeLabels(issueId, toRemove);
+  }
+  await provider.addLabel(issueId, "review:human");
+
+  await auditLog(workspaceDir, "architecture_review_routing_enforced", {
+    project: projectName,
+    issueId,
+    priorRouting: routing,
+    enforcedRouting: "review:human",
+  });
+
+  return true;
 }
 
 /**
@@ -86,6 +216,19 @@ export async function executeCompletion(opts: {
   if (!rule) throw new Error(`No completion rule for ${key}`);
 
   const { timeouts } = await loadConfig(workspaceDir, projectName);
+  const qualityGateConfig = await enforceDeveloperQualityGate(role, result, repoPath, pluginConfig);
+
+  if (qualityGateConfig?.enabled) {
+    await auditLog(workspaceDir, "quality_gate_passed", {
+      project: projectName,
+      issueId,
+      role,
+      buildCommand: qualityGateConfig.buildCommand,
+      testCommand: qualityGateConfig.testCommand,
+      timeoutMs: qualityGateConfig.timeoutMs,
+    }).catch(() => {});
+  }
+
   let prUrl = opts.prUrl;
   let mergedPr = false;
   let prTitle: string | undefined;
@@ -131,7 +274,21 @@ export async function executeCompletion(opts: {
   }
 
   // Get issue early (for URL in notification + channel routing)
-  const issue = await provider.getIssue(issueId);
+  let issue = await provider.getIssue(issueId);
+  const architectureReviewEnforced = await enforceArchitectureReviewRouting({
+    role,
+    result,
+    issueId,
+    issue: {
+      labels: issue.labels,
+    },
+    provider,
+    workspaceDir,
+    projectName,
+  });
+  if (architectureReviewEnforced) {
+    issue = await provider.getIssue(issueId);
+  }
   const notifyTarget = resolveNotifyChannel(issue.labels, channels);
 
   // Get next state description from workflow

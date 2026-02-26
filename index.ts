@@ -106,6 +106,59 @@ const plugin = {
           },
         },
       },
+      quality_gate: {
+        type: "object",
+        description:
+          "Strict completion gate for developer work_finish(done). Requires build + test to pass before pipeline transition.",
+        properties: {
+          enabled: {
+            type: "boolean",
+            default: true,
+            description: "Enable strict build/test gate before developer completion.",
+          },
+          buildCommand: {
+            type: "string",
+            default: "npm run build",
+            description: "Command run for build validation before work_finish(done).",
+          },
+          testCommand: {
+            type: "string",
+            default: "npm test",
+            description: "Command run for test validation before work_finish(done).",
+          },
+          timeoutMs: {
+            type: "number",
+            default: 1200000,
+            description: "Timeout for each quality-gate command in milliseconds.",
+          },
+        },
+      },
+      worker_pattern_guard: {
+        type: "object",
+        description:
+          "Heartbeat guard for repeated terminate/no-progress patterns. Escalates recurring failures to refining for human triage.",
+        properties: {
+          enabled: {
+            type: "boolean",
+            default: true,
+          },
+          terminateStrikeThreshold: {
+            type: "number",
+            default: 2,
+            description: "Escalate after this many terminate-like health fixes for one issue/role.",
+          },
+          noProgressStrikeThreshold: {
+            type: "number",
+            default: 2,
+            description: "Escalate after this many no-progress (stale) health fixes for one issue/role.",
+          },
+          strikeWindowHours: {
+            type: "number",
+            default: 24,
+            description: "Strike history window before counters expire.",
+          },
+        },
+      },
       refining_triage: {
         type: "object",
         description:

@@ -103,6 +103,53 @@ function flattenModels(entries: Record<string, ModelEntry>): Record<string, stri
   return flat;
 }
 
+/** Placeholder models are kept in defaults as docs tokens (e.g. "<GITHUB_APP_MODEL_DEVELOPER_STANDARD>"). */
+function isModelPlaceholder(value: string): boolean {
+  const trimmed = value.trim();
+  return /^<[^>]+>$/.test(trimmed);
+}
+
+function entryModel(entry: ModelEntry | undefined): string | undefined {
+  if (!entry) return undefined;
+  return typeof entry === "string" ? entry : entry.model;
+}
+
+function entryMaxWorkers(entry: ModelEntry | undefined): number | undefined {
+  if (!entry || typeof entry === "string") return undefined;
+  return entry.maxWorkers;
+}
+
+/**
+ * Merge role model overrides with registry defaults.
+ * If an override uses a placeholder token, keep the registry default model.
+ */
+function mergeModelEntries(
+  base: Record<string, ModelEntry>,
+  override?: Record<string, ModelEntry>,
+): Record<string, ModelEntry> {
+  const merged: Record<string, ModelEntry> = { ...base };
+  if (!override) return merged;
+
+  for (const [level, overrideEntry] of Object.entries(override)) {
+    const fallback = merged[level];
+    const fallbackModel = entryModel(fallback);
+    const overrideModel = entryModel(overrideEntry);
+    const resolvedModel =
+      overrideModel && isModelPlaceholder(overrideModel) && fallbackModel
+        ? fallbackModel
+        : overrideModel ?? fallbackModel;
+    if (!resolvedModel) continue;
+
+    const resolvedMaxWorkers = entryMaxWorkers(overrideEntry) ?? entryMaxWorkers(fallback);
+    merged[level] =
+      resolvedMaxWorkers !== undefined
+        ? { model: resolvedModel, maxWorkers: resolvedMaxWorkers }
+        : resolvedModel;
+  }
+
+  return merged;
+}
+
 /** Resolve per-level maxWorkers from model entries + global default. */
 function resolveLevelMaxWorkers(
   models: Record<string, ModelEntry>,
@@ -142,10 +189,7 @@ function resolve(config: VibeClawCoderConfig): ResolvedConfig {
       }
 
       const reg = ROLE_REGISTRY[id];
-      const mergedModels: Record<string, ModelEntry> = {
-        ...(reg?.models ?? {}),
-        ...(override.models ?? {}),
-      };
+      const mergedModels = mergeModelEntries(reg?.models ?? {}, override.models);
       roles[id] = {
         levelMaxWorkers: resolveLevelMaxWorkers(mergedModels, globalMaxWorkers),
         levels: override.levels ?? (reg ? [...reg.levels] : []),

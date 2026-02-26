@@ -69,9 +69,9 @@ Update BOTH files if changing defaults:
 2. `lib/roles/registry.ts`
 
 Recommended baseline:
-- developer.standard -> `inferencer-local//mlx-community/MiniMax-M2.5-5bit`
-- reviewer.standard -> `openai-codex/gpt-5.1-codex-mini`
-- architect.standard -> `openai-codex/gpt-5.3-codex`
+- developer.standard -> `<GITHUB_APP_MODEL_DEVELOPER_STANDARD>`
+- reviewer.standard -> `<GITHUB_APP_MODEL_REVIEWER_STANDARD>`
+- architect.standard -> `<GITHUB_APP_MODEL_ARCHITECT_STANDARD>`
 
 After any model change:
 ```bash
@@ -136,7 +136,7 @@ Why fork now:
 ## Hardware + model baseline
 
 Primary build runtime:
-- local MiniMax 2.5 5bit (`inferencer-local//mlx-community/MiniMax-M2.5-5bit`)
+- local coding model (`<GITHUB_APP_MODEL_DEVELOPER_STANDARD>`)
 - running on an Apple Silicon Mac Studio (Ultra M3, 256GB RAM)
 - shoutout to xCreate on YouTube and his bleeding edge MLX AI research and app Inferencer for macOS, which enabled this entire project (see https://youtu.be/O_pQG6x9dvY?si=NJ-hLpez7idBUFGR)
 
@@ -170,6 +170,8 @@ This fork now includes:
   - `pr_ensure_linked` tool for explicit PR preflight
   - auto-recovery in `work_finish(done)` (auto-link or auto-create PR)
   - branch/issue mismatch safeguards in dispatch and completion flow
+- strict quality gate on developer completion (`work_finish(done)` requires successful build + test)
+- architecture-sensitive issues are forced to `review:human` routing (no review skip for architecture work)
 - single-scheduler ownership enforcement in heartbeat (`channels[].accountId` must match running agent)
 - early-PR discipline in worker task prompts (open/link PR after first meaningful commit)
 - hard ownership enforcement in mutation tools (`work_start` / `work_finish`) based on project owner
@@ -177,6 +179,7 @@ This fork now includes:
 - scheduled daily project status reporting at local noon (defaults to project `primary` channel + owner agent, configurable in `setup`/`project_register`)
 - automated refining backlog triage: when open `Refining` reaches threshold (default `10`), reviewer-model triage moves items to `To Do` or docks them for `HUMAN INPUT`
 - human-input queue alerting: when open `human-input` reaches threshold (default `5`), one channel alert posts links + required human decision text for each item; alerts reset only after queue drops below threshold
+- repeated terminate/no-progress worker patterns are auto-escalated to `Refining` after configurable strike thresholds
 
 
 ## Planned minimal workflow

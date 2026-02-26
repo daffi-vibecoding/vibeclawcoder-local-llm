@@ -32,7 +32,7 @@ import { testSkipPass } from "./test-skip.js";
 import { createProvider } from "../providers/index.js";
 import { loadConfig } from "../config/index.js";
 import type { ResolvedConfig } from "../config/types.js";
-import { ExecutionMode, resolveNotifyChannel, StateType } from "../workflow.js";
+import { ExecutionMode, resolveNotifyChannel, StateType, getCurrentStateLabel } from "../workflow.js";
 import { notify, getNotificationConfig } from "../notify.js";
 import { projectOwnedByAgent } from "../ownership.js";
 import { runCommand } from "../run-command.js";
@@ -65,6 +65,13 @@ type RefiningTriageConfig = {
   humanNotifyThreshold: number;
 };
 
+type WorkerPatternGuardConfig = {
+  enabled: boolean;
+  terminateStrikeThreshold: number;
+  noProgressStrikeThreshold: number;
+  strikeWindowHours: number;
+};
+
 type Agent = {
   agentId: string;
   workspace: string;
@@ -73,6 +80,7 @@ type Agent = {
 type TickResult = {
   totalPickups: number;
   totalHealthFixes: number;
+  totalPatternEscalations: number;
   totalSkipped: number;
   totalReviewTransitions: number;
   totalReviewSkipTransitions: number;
@@ -117,6 +125,13 @@ export const REFINING_TRIAGE_DEFAULTS: RefiningTriageConfig = {
   humanNotifyThreshold: 5,
 };
 
+export const WORKER_PATTERN_GUARD_DEFAULTS: WorkerPatternGuardConfig = {
+  enabled: true,
+  terminateStrikeThreshold: 2,
+  noProgressStrikeThreshold: 2,
+  strikeWindowHours: 24,
+};
+
 export function resolveHeartbeatConfig(
   pluginConfig?: Record<string, unknown>,
 ): HeartbeatConfig {
@@ -153,6 +168,19 @@ export function resolveRefiningTriageConfig(
     humanInputLabel: String(raw.humanInputLabel ?? REFINING_TRIAGE_DEFAULTS.humanInputLabel),
     humanNotifyThreshold: Math.max(1, Number(raw.humanNotifyThreshold ?? REFINING_TRIAGE_DEFAULTS.humanNotifyThreshold)),
     model: raw.model ? String(raw.model) : undefined,
+  };
+}
+
+export function resolveWorkerPatternGuardConfig(
+  pluginConfig?: Record<string, unknown>,
+): WorkerPatternGuardConfig {
+  const raw = (pluginConfig?.worker_pattern_guard ?? {}) as Partial<WorkerPatternGuardConfig>;
+  return {
+    ...WORKER_PATTERN_GUARD_DEFAULTS,
+    ...raw,
+    terminateStrikeThreshold: Math.max(1, Number(raw.terminateStrikeThreshold ?? WORKER_PATTERN_GUARD_DEFAULTS.terminateStrikeThreshold)),
+    noProgressStrikeThreshold: Math.max(1, Number(raw.noProgressStrikeThreshold ?? WORKER_PATTERN_GUARD_DEFAULTS.noProgressStrikeThreshold)),
+    strikeWindowHours: Math.max(1, Number(raw.strikeWindowHours ?? WORKER_PATTERN_GUARD_DEFAULTS.strikeWindowHours)),
   };
 }
 
@@ -287,6 +315,7 @@ async function processAllAgents(
   const result: TickResult = {
     totalPickups: 0,
     totalHealthFixes: 0,
+    totalPatternEscalations: 0,
     totalSkipped: 0,
     totalReviewTransitions: 0,
     totalReviewSkipTransitions: 0,
@@ -337,6 +366,7 @@ async function processAllAgents(
 
     result.totalPickups += agentResult.totalPickups;
     result.totalHealthFixes += agentResult.totalHealthFixes;
+    result.totalPatternEscalations += agentResult.totalPatternEscalations;
     result.totalSkipped += agentResult.totalSkipped;
     result.totalReviewTransitions += agentResult.totalReviewTransitions;
     result.totalReviewSkipTransitions += agentResult.totalReviewSkipTransitions;
@@ -357,13 +387,14 @@ function logTickResult(
   if (
     result.totalPickups > 0 ||
     result.totalHealthFixes > 0 ||
+    result.totalPatternEscalations > 0 ||
     result.totalReviewTransitions > 0 ||
     result.totalReviewSkipTransitions > 0 ||
     result.totalTestSkipTransitions > 0 ||
     result.totalRefiningTriaged > 0
   ) {
     logger.info(
-      `work_heartbeat tick: ${result.totalPickups} pickups, ${result.totalHealthFixes} health fixes, ${result.totalReviewTransitions} review transitions, ${result.totalReviewSkipTransitions} review skips, ${result.totalTestSkipTransitions} test skips, ${result.totalRefiningTriaged} refining triaged, ${result.totalSkipped} skipped`,
+      `work_heartbeat tick: ${result.totalPickups} pickups, ${result.totalHealthFixes} health fixes, ${result.totalPatternEscalations} pattern escalations, ${result.totalReviewTransitions} review transitions, ${result.totalReviewSkipTransitions} review skips, ${result.totalTestSkipTransitions} test skips, ${result.totalRefiningTriaged} refining triaged, ${result.totalSkipped} skipped`,
     );
   }
 }
@@ -405,6 +436,7 @@ export async function tick(opts: {
     return {
       totalPickups: 0,
       totalHealthFixes: 0,
+      totalPatternEscalations: 0,
       totalSkipped: 0,
       totalReviewTransitions: 0,
       totalReviewSkipTransitions: 0,
@@ -416,6 +448,7 @@ export async function tick(opts: {
   const result: TickResult = {
     totalPickups: 0,
     totalHealthFixes: 0,
+    totalPatternEscalations: 0,
     totalSkipped: 0,
     totalReviewTransitions: 0,
     totalReviewSkipTransitions: 0,
@@ -449,15 +482,19 @@ export async function tick(opts: {
       );
 
       // Health pass: auto-fix zombies and stale workers
-      result.totalHealthFixes += await performHealthPass(
+      const healthPass = await performHealthPass(
         workspaceDir,
         slug,
         project,
         sessions,
         provider,
+        resolvedConfig,
+        pluginConfig,
         resolvedConfig.timeouts.staleWorkerHours,
         instanceName,
       );
+      result.totalHealthFixes += healthPass.fixedCount;
+      result.totalPatternEscalations += healthPass.patternEscalations;
 
       // Review pass: transition issues whose PR check condition is met
       result.totalReviewTransitions += await performReviewPass(
@@ -529,6 +566,7 @@ export async function tick(opts: {
     projectsScanned: slugs.length,
     projectsSeen: allSlugs.length,
     healthFixes: result.totalHealthFixes,
+    patternEscalations: result.totalPatternEscalations,
     reviewTransitions: result.totalReviewTransitions,
     reviewSkipTransitions: result.totalReviewSkipTransitions,
     testSkipTransitions: result.totalTestSkipTransitions,
@@ -753,12 +791,26 @@ type HumanInputAlertState = {
   alerted: Record<string, boolean>;
 };
 
+type WorkerPatternStrikes = {
+  terminate: number;
+  noProgress: number;
+  updatedAt: string;
+};
+
+type WorkerPatternState = {
+  strikes: Record<string, WorkerPatternStrikes>;
+};
+
 function dailyStatusStatePath(workspaceDir: string): string {
   return path.join(workspaceDir, DATA_DIR, "daily-status-state.json");
 }
 
 function humanInputAlertStatePath(workspaceDir: string): string {
   return path.join(workspaceDir, DATA_DIR, "human-input-alert-state.json");
+}
+
+function workerPatternStatePath(workspaceDir: string): string {
+  return path.join(workspaceDir, DATA_DIR, "worker-pattern-state.json");
 }
 
 async function readDailyStatusState(workspaceDir: string): Promise<DailyStatusState> {
@@ -795,6 +847,38 @@ async function writeHumanInputAlertState(workspaceDir: string, state: HumanInput
   await fs.promises.mkdir(path.dirname(file), { recursive: true });
   await fs.promises.writeFile(tmp, JSON.stringify(state, null, 2) + "\n", "utf-8");
   await fs.promises.rename(tmp, file);
+}
+
+async function readWorkerPatternState(workspaceDir: string): Promise<WorkerPatternState> {
+  try {
+    const raw = await fs.promises.readFile(workerPatternStatePath(workspaceDir), "utf-8");
+    const parsed = JSON.parse(raw) as WorkerPatternState;
+    return parsed && typeof parsed === "object" && parsed.strikes ? parsed : { strikes: {} };
+  } catch {
+    return { strikes: {} };
+  }
+}
+
+async function writeWorkerPatternState(workspaceDir: string, state: WorkerPatternState): Promise<void> {
+  const file = workerPatternStatePath(workspaceDir);
+  const tmp = file + ".tmp";
+  await fs.promises.mkdir(path.dirname(file), { recursive: true });
+  await fs.promises.writeFile(tmp, JSON.stringify(state, null, 2) + "\n", "utf-8");
+  await fs.promises.rename(tmp, file);
+}
+
+function pruneWorkerPatternState(state: WorkerPatternState, windowHours: number): void {
+  const cutoff = Date.now() - windowHours * 3_600_000;
+  for (const [key, strike] of Object.entries(state.strikes)) {
+    const ts = Date.parse(strike.updatedAt);
+    if (!Number.isFinite(ts) || ts < cutoff) {
+      delete state.strikes[key];
+    }
+  }
+}
+
+function workerPatternKey(projectSlug: string, role: string, issueId: string): string {
+  return `${projectSlug}:${role}:${issueId}`;
 }
 
 function truncateSingleLine(text: string, max = 180): string {
@@ -1009,19 +1093,107 @@ async function performDailyStatusReport(
   }
 }
 
+async function applyWorkerPatternGuardForFixes(opts: {
+  workspaceDir: string;
+  projectSlug: string;
+  projectName: string;
+  role: string;
+  workflow: ResolvedConfig["workflow"];
+  provider: import("../providers/provider.js").IssueProvider;
+  state: WorkerPatternState;
+  cfg: WorkerPatternGuardConfig;
+  fixes: Array<{ fixed: boolean; issue: { type: string; issueId?: string | null } }>;
+}): Promise<number> {
+  const { workspaceDir, projectSlug, projectName, role, workflow, provider, state, cfg, fixes } = opts;
+  if (!cfg.enabled) return 0;
+
+  let escalations = 0;
+  const refiningLabel = findRefiningLabel(workflow) ?? findHumanDockLabel(workflow);
+  if (!refiningLabel) return 0;
+
+  for (const fix of fixes) {
+    if (!fix.fixed) continue;
+    const issueId = fix.issue.issueId ? String(fix.issue.issueId) : null;
+    if (!issueId) continue;
+
+    let kind: "terminate" | "noProgress" | null = null;
+    if (fix.issue.type === "context_overflow" || fix.issue.type === "session_dead") {
+      kind = "terminate";
+    } else if (fix.issue.type === "stale_worker") {
+      kind = "noProgress";
+    }
+    if (!kind) continue;
+
+    const key = workerPatternKey(projectSlug, role, issueId);
+    const strike = state.strikes[key] ?? {
+      terminate: 0,
+      noProgress: 0,
+      updatedAt: new Date().toISOString(),
+    };
+    if (kind === "terminate") strike.terminate += 1;
+    if (kind === "noProgress") strike.noProgress += 1;
+    strike.updatedAt = new Date().toISOString();
+    state.strikes[key] = strike;
+
+    const shouldEscalate =
+      strike.terminate >= cfg.terminateStrikeThreshold ||
+      strike.noProgress >= cfg.noProgressStrikeThreshold;
+    if (!shouldEscalate) continue;
+
+    const issueNum = Number(issueId);
+    if (!Number.isFinite(issueNum)) continue;
+
+    try {
+      const issue = await provider.getIssue(issueNum);
+      const current = getCurrentStateLabel(issue.labels, workflow);
+      if (current && current !== refiningLabel) {
+        await provider.transitionLabel(issueNum, current, refiningLabel);
+      }
+      await provider.addComment(
+        issueNum,
+        `Auto-escalated by worker-pattern guard after repeated terminate/no-progress signals.\n` +
+        `Counts: terminate=${strike.terminate}, no_progress=${strike.noProgress}.\n` +
+        `Moved to ${refiningLabel} for human triage.`,
+      ).catch(() => {});
+      await auditLog(workspaceDir, "worker_pattern_escalated", {
+        project: projectName,
+        issueId: issueNum,
+        role,
+        terminateStrikes: strike.terminate,
+        noProgressStrikes: strike.noProgress,
+        targetLabel: refiningLabel,
+      }).catch(() => {});
+      escalations++;
+    } catch {
+      // Best-effort escalation.
+    } finally {
+      delete state.strikes[key];
+    }
+  }
+
+  return escalations;
+}
+
 /**
- * Run health checks and auto-fix for a project (dev + qa roles).
+ * Run health checks and auto-fix for a project.
  */
 async function performHealthPass(
   workspaceDir: string,
   projectSlug: string,
-  project: any,
+  project: Project,
   sessions: SessionLookup | null,
   provider: import("../providers/provider.js").IssueProvider,
+  resolvedConfig: ResolvedConfig,
+  pluginConfig: Record<string, unknown> | undefined,
   staleWorkerHours?: number,
   instanceName?: string,
-): Promise<number> {
+): Promise<{ fixedCount: number; patternEscalations: number }> {
   let fixedCount = 0;
+  let patternEscalations = 0;
+
+  const guardCfg = resolveWorkerPatternGuardConfig(pluginConfig);
+  const patternState = await readWorkerPatternState(workspaceDir);
+  pruneWorkerPatternState(patternState, guardCfg.strikeWindowHours);
 
   for (const role of Object.keys(project.workers)) {
     // Check worker health (session liveness, label consistency, etc)
@@ -1034,8 +1206,22 @@ async function performHealthPass(
       autoFix: true,
       provider,
       staleWorkerHours,
+      workflow: resolvedConfig.workflow,
     });
     fixedCount += healthFixes.filter((f) => f.fixed).length;
+
+    // Escalate repeated terminate/no-progress patterns to avoid endless redispatch loops.
+    patternEscalations += await applyWorkerPatternGuardForFixes({
+      workspaceDir,
+      projectSlug,
+      projectName: project.name,
+      role,
+      workflow: resolvedConfig.workflow,
+      provider,
+      state: patternState,
+      cfg: guardCfg,
+      fixes: healthFixes,
+    });
 
     // Scan for orphaned labels (active labels with no tracking worker)
     const orphanFixes = await scanOrphanedLabels({
@@ -1046,11 +1232,13 @@ async function performHealthPass(
       autoFix: true,
       provider,
       instanceName,
+      workflow: resolvedConfig.workflow,
     });
     fixedCount += orphanFixes.filter((f) => f.fixed).length;
   }
 
-  return fixedCount;
+  await writeWorkerPatternState(workspaceDir, patternState).catch(() => {});
+  return { fixedCount, patternEscalations };
 }
 
 /**

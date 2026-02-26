@@ -108,6 +108,22 @@ function ensureHeartbeatDefaults(config: Record<string, unknown>): void {
   if (!vibeclawcoder.work_heartbeat) {
     vibeclawcoder.work_heartbeat = { ...HEARTBEAT_DEFAULTS };
   }
+  if (!vibeclawcoder.quality_gate) {
+    vibeclawcoder.quality_gate = {
+      enabled: true,
+      buildCommand: "npm run build",
+      testCommand: "npm test",
+      timeoutMs: 1_200_000,
+    };
+  }
+  if (!vibeclawcoder.worker_pattern_guard) {
+    vibeclawcoder.worker_pattern_guard = {
+      enabled: true,
+      terminateStrikeThreshold: 2,
+      noProgressStrikeThreshold: 2,
+      strikeWindowHours: 24,
+    };
+  }
   if (!vibeclawcoder.refining_triage) {
     vibeclawcoder.refining_triage = {
       enabled: true,

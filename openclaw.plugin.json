@@ -100,6 +100,42 @@
           }
         }
       },
+      "quality_gate": {
+        "type": "object",
+        "description": "Strict completion gate for developer work_finish(done): build + test must pass.",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "buildCommand": {
+            "type": "string"
+          },
+          "testCommand": {
+            "type": "string"
+          },
+          "timeoutMs": {
+            "type": "number"
+          }
+        }
+      },
+      "worker_pattern_guard": {
+        "type": "object",
+        "description": "Escalate repeated terminate/no-progress health patterns to refining for human triage.",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "terminateStrikeThreshold": {
+            "type": "number"
+          },
+          "noProgressStrikeThreshold": {
+            "type": "number"
+          },
+          "strikeWindowHours": {
+            "type": "number"
+          }
+        }
+      },
       "refining_triage": {
         "type": "object",
         "description": "Automated refining backlog triage using the reviewer model lane.",

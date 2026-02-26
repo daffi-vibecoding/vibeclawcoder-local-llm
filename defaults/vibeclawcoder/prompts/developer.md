@@ -6,6 +6,7 @@
 - Use an issue-scoped branch for every task (example: `issue-<id>-short-name`).
 - Create/link the PR early (after first meaningful commit), not only at task end.
 - Before calling `work_finish(done)`, run `pr_ensure_linked` and make sure it returns success.
+- `work_finish(done)` is hard-gated: build + test must pass first.
 - PR must include `Closes #<id>` in title/body.
 - Never complete Issue A from Issue B's branch/PR. If mismatched, switch branch and open the correct PR first.
 - Escalate only when blocked by credentials, architecture decisions, or repeated test failures.

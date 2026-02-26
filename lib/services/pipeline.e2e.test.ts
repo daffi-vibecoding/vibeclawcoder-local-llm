@@ -180,6 +180,16 @@ describe("E2E pipeline", () => {
       const data = await readProjects(h.workspaceDir);
       assert.strictEqual(countActiveSlots(getRoleWorker(getProject(data, h.groupId)!, "developer")), 0);
       assert.strictEqual(output.issueClosed, false);
+
+      const shCalls = h.commands.commandsFor("sh");
+      assert.ok(
+        shCalls.some((c) => c.argv[1] === "-lc" && c.argv[2] === "npm run build"),
+        "Expected quality gate build command to run",
+      );
+      assert.ok(
+        shCalls.some((c) => c.argv[1] === "-lc" && c.argv[2] === "npm test"),
+        "Expected quality gate test command to run",
+      );
     });
   });
 

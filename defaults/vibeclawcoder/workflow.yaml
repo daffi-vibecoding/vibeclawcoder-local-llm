@@ -1,22 +1,23 @@
+# Replace placeholder models with the GitHub app version's configured model IDs.
 roles:
   developer:
     levels: [standard]
     defaultLevel: standard
     maxWorkers: 2
     models:
-      standard: inferencer-local//mlx-community/MiniMax-M2.5-5bit
+      standard: <GITHUB_APP_MODEL_DEVELOPER_STANDARD>
   reviewer:
     levels: [standard]
     defaultLevel: standard
     maxWorkers: 1
     models:
-      standard: openai-codex/gpt-5.1-codex-mini
+      standard: <GITHUB_APP_MODEL_REVIEWER_STANDARD>
   architect:
     levels: [standard]
     defaultLevel: standard
     maxWorkers: 1
     models:
-      standard: openai-codex/gpt-5.3-codex
+      standard: <GITHUB_APP_MODEL_ARCHITECT_STANDARD>
   tester: false
 
 workflow:
