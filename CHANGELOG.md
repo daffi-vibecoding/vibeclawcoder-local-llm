@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## v1.1.3 - 2026-02-26
+
+- docs: align README release stage/version to v1.1.3
+- chore(release): formal version bump to v1.1.3
+
 ## v1.1.2 - 2026-02-26
 
 - feat: enforce strict developer completion quality gate (`build` + `test`) before `work_finish(done)` transition
