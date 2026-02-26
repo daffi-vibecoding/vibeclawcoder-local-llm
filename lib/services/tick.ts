@@ -79,7 +79,11 @@ export async function projectTick(opts: {
   const resolvedConfig = await loadConfig(workspaceDir, project.name);
   const workflow = opts.workflow ?? resolvedConfig.workflow;
 
-  const provider = opts.provider ?? (await createProvider({ repo: project.repo, provider: project.provider })).provider;
+  const provider = opts.provider ?? (await createProvider({
+    repo: project.repo,
+    provider: project.provider,
+    repoRemote: project.repoRemote,
+  })).provider;
   const roleExecution = workflow.roleExecution ?? ExecutionMode.PARALLEL;
   const enabledRoles = Object.entries(resolvedConfig.roles)
     .filter(([, r]) => r.enabled)
