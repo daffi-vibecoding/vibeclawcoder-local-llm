@@ -1,6 +1,6 @@
 # VibeClawCoder (Local LLM)
 
-A simplified, local-first fork of VibeClawCoder for novice vibecoders.
+A simplified, local-first fork of devclaw.
 
 ## Setup + Model Swaps (single walkthrough)
 
