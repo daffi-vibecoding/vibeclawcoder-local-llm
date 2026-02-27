@@ -10,7 +10,7 @@
 import type { OpenClawPluginApi } from "openclaw/plugin-sdk";
 import { jsonResult } from "openclaw/plugin-sdk";
 import type { ToolContext } from "../types.js";
-import { getRoleWorker, resolveRepoPath } from "../projects.js";
+import { findSlotByIssue, getRoleWorker, resolveRepoPath } from "../projects.js";
 import { executeCompletion, getRule } from "../services/pipeline.js";
 import { log as auditLog } from "../audit.js";
 import { requireWorkspaceDir, resolveProject, resolveProvider, getPluginConfig } from "../tool-helpers.js";
@@ -111,6 +111,7 @@ export function createWorkFinishTool(api: OpenClawPluginApi) {
         projectSlug: { type: "string", description: "Project slug (e.g. 'my-webapp')" },
         summary: { type: "string", description: "Brief summary" },
         prUrl: { type: "string", description: "PR/MR URL (auto-detected if omitted)" },
+        issueId: { type: "number", description: "Issue ID to complete (required when a role has multiple active slots)" },
         createdTasks: {
           type: "array",
           items: {
@@ -135,6 +136,12 @@ export function createWorkFinishTool(api: OpenClawPluginApi) {
       const prUrl = params.prUrl as string | undefined;
       const createdTasks = params.createdTasks as Array<{ id: number; title: string; url: string }> | undefined;
       const workspaceDir = requireWorkspaceDir(ctx);
+      const explicitIssueId = typeof params.issueId === "number" && Number.isFinite(params.issueId)
+        ? Math.trunc(params.issueId)
+        : typeof params.issueId === "string" && /^\d+$/.test(params.issueId.trim())
+          ? Number(params.issueId.trim())
+          : undefined;
+      const sessionKey = ctx.sessionKey;
 
       // Validate role:result using registry
       if (!isValidResult(role, result)) {
@@ -147,25 +154,71 @@ export function createWorkFinishTool(api: OpenClawPluginApi) {
       assertProjectOwnedByAgent(project, ctx.agentId, "work_finish");
       const roleWorker = getRoleWorker(project, role);
 
-      // Find the first active slot across all levels
+      // Resolve the active slot to operate on.
+      // Prefer explicitly requested issueId, otherwise the current session's slot.
       let slotIndex: number | null = null;
       let slotLevel: string | null = null;
       let issueId: number | null = null;
 
-      for (const [level, slots] of Object.entries(roleWorker.levels)) {
-        for (let i = 0; i < slots.length; i++) {
-          if (slots[i]!.active && slots[i]!.issueId) {
-            slotLevel = level;
-            slotIndex = i;
-            issueId = Number(slots[i]!.issueId);
-            break;
-          }
+      if (explicitIssueId !== undefined) {
+        const found = findSlotByIssue(roleWorker, String(explicitIssueId));
+        if (!found) {
+          throw new Error(`${role.toUpperCase()} worker has no active assignment for issue #${explicitIssueId} on ${project.name}`);
         }
-        if (issueId !== null) break;
+        const slot = roleWorker.levels[found.level]?.[found.slotIndex];
+        if (!slot || !slot.active || slot.issueId == null) {
+          throw new Error(`${role.toUpperCase()} worker has no active assignment for issue #${explicitIssueId} on ${project.name}`);
+        }
+        if (sessionKey && slot.sessionKey && slot.sessionKey !== sessionKey) {
+          throw new Error(
+            `${role.toUpperCase()} worker on ${project.name} has issue #${explicitIssueId} but it is owned by session ${slot.sessionKey}, ` +
+            `not this session (${sessionKey}).`
+          );
+        }
+        slotLevel = found.level;
+        slotIndex = found.slotIndex;
+        issueId = Number(slot.issueId);
       }
 
       if (slotIndex === null || slotLevel === null || issueId === null) {
-        throw new Error(`${role.toUpperCase()} worker not active on ${project.name}`);
+        const activeSlots: Array<{ level: string; slotIndex: number; issueId: number; sessionKey: string | null }> = [];
+        for (const [level, slots] of Object.entries(roleWorker.levels)) {
+          for (let i = 0; i < slots.length; i++) {
+            const slot = slots[i];
+            if (slot?.active && slot.issueId != null) {
+              activeSlots.push({
+                level,
+                slotIndex: i,
+                issueId: Number(slot.issueId),
+                sessionKey: slot.sessionKey,
+              });
+            }
+          }
+        }
+
+        if (activeSlots.length === 0) {
+          throw new Error(`${role.toUpperCase()} worker not active on ${project.name}`);
+        }
+
+        const matchedBySession = sessionKey ? activeSlots.filter((s) => s.sessionKey === sessionKey) : [];
+
+        if (matchedBySession.length === 1) {
+          ({ level: slotLevel, slotIndex, issueId } = matchedBySession[0]);
+        } else if (matchedBySession.length > 1) {
+          throw new Error(
+            `Multiple active ${role} slots found for this session on ${project.name}: ${matchedBySession
+              .map((s) => `#${s.issueId} (${s.level})`)
+              .join(", ")}. Pass issueId explicitly to work_finish.`
+          );
+        } else if (activeSlots.length === 1) {
+          ({ level: slotLevel, slotIndex, issueId } = activeSlots[0]);
+        } else {
+          throw new Error(
+            `Unable to uniquely resolve active ${role} slot on ${project.name}; active issues: ${activeSlots
+              .map((s) => `#${s.issueId}`)
+              .join(", ")}. Pass issueId explicitly.`
+          );
+        }
       }
 
       const { provider } = await resolveProvider(project);

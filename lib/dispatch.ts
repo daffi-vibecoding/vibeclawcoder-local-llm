@@ -228,6 +228,51 @@ export async function dispatchTask(
     existingSessionKey = null;
   }
 
+  // Branch sanity guard: only hard-reset when mismatch clearly indicates stale slot context.
+  // In multi-worker shared repos, branch can legitimately reflect another worker's issue.
+  if (existingSessionKey) {
+    try {
+      const repoPath = resolveRepoPath(project.repo);
+      const branchName = await getCurrentBranch(repoPath);
+      const branchIssueId = extractIssueIdFromBranch(branchName);
+      const slotIssueIdNum = slot.issueId ? Number(slot.issueId) : null;
+
+      if (branchIssueId !== null && branchIssueId !== issueId) {
+        await auditLog(workspaceDir, "dispatch_warning", {
+          step: "branch_issue_mismatch",
+          project: project.name,
+          issue: issueId,
+          branchName,
+          branchIssueId,
+          slotIssueId: slot.issueId,
+        });
+
+        // Reset only when the current branch matches this slot's previous issue.
+        // Otherwise keep session to avoid churn caused by other workers switching branches.
+        const shouldResetForMismatch =
+          slotIssueIdNum !== null &&
+          Number.isFinite(slotIssueIdNum) &&
+          branchIssueId === slotIssueIdNum &&
+          slotIssueIdNum !== issueId;
+
+        if (shouldResetForMismatch) {
+          await runCommand(
+            ["openclaw", "gateway", "call", "sessions.delete", "--params", JSON.stringify({ key: sessionKey })],
+            { timeoutMs: 10_000 },
+          ).catch(() => {});
+
+          await updateSlot(workspaceDir, project.slug, role, level, slotIndex, {
+            sessionKey: null,
+          }).catch(() => {});
+
+          existingSessionKey = null;
+        }
+      }
+    } catch {
+      // Best-effort safety check
+    }
+  }
+
   const sessionAction = existingSessionKey ? "send" : "spawn";
 
   // Fetch comments to include in task context
@@ -373,23 +418,6 @@ export async function dispatchTask(
   }
 
   // Step 6: Audit
-  try {
-    const repoPath = resolveRepoPath(project.repo);
-    const branchName = await getCurrentBranch(repoPath);
-    const branchIssueId = extractIssueIdFromBranch(branchName);
-    if (branchIssueId !== null && branchIssueId !== issueId) {
-      await auditLog(workspaceDir, "dispatch_warning", {
-        step: "branch_issue_mismatch",
-        project: project.name,
-        issue: issueId,
-        branchName,
-        branchIssueId,
-      });
-    }
-  } catch {
-    // Best-effort sanity check
-  }
-
   await auditDispatch(workspaceDir, {
     project: project.name, issueId, issueTitle,
     role, level, model, sessionAction, sessionKey,

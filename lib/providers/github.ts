@@ -37,16 +37,49 @@ function toIssue(gh: GhIssue): Issue {
 
 export class GitHubProvider implements IssueProvider {
   private repoPath: string;
+  private repoSlug?: string;
   private workflow: WorkflowConfig;
+  private static readonly REPO_SCOPED_COMMANDS = new Set(["issue", "pr", "label", "repo"]);
 
-  constructor(opts: { repoPath: string; workflow?: WorkflowConfig }) {
+  constructor(opts: { repoPath: string; repoSlug?: string; workflow?: WorkflowConfig }) {
     this.repoPath = opts.repoPath;
+    this.repoSlug = opts.repoSlug?.trim() || undefined;
     this.workflow = opts.workflow ?? DEFAULT_WORKFLOW;
+  }
+
+  private getConfiguredRepoInfo(): { owner: string; name: string } | null {
+    if (!this.repoSlug) return null;
+    const parts = this.repoSlug.split("/", 2);
+    const owner = parts[0]?.trim();
+    const name = parts[1]?.trim();
+    if (!owner || !name) return null;
+    return { owner, name };
+  }
+
+  private withRepoContext(args: string[]): string[] {
+    if (!this.repoSlug || args.length === 0) return args;
+
+    const [cmd, ...rest] = args;
+
+    if (cmd === "api") {
+      if (rest.length === 0) return args;
+      const endpoint = rest[0];
+      const repo = this.getConfiguredRepoInfo();
+      if (!repo || !endpoint || !endpoint.includes("repos/:owner/:repo/")) return args;
+      const resolvedEndpoint = endpoint
+        .replaceAll(":owner", repo.owner)
+        .replaceAll(":repo", repo.name);
+      return [cmd, resolvedEndpoint, ...rest.slice(1)];
+    }
+
+    if (!GitHubProvider.REPO_SCOPED_COMMANDS.has(cmd)) return args;
+    if (rest.includes("--repo") || rest.includes("-R")) return args;
+    return [cmd, ...rest, "--repo", this.repoSlug];
   }
 
   private async gh(args: string[]): Promise<string> {
     return withResilience(async () => {
-      const result = await runCommand(["gh", ...args], { timeoutMs: 30_000, cwd: this.repoPath });
+      const result = await runCommand(["gh", ...this.withRepoContext(args)], { timeoutMs: 30_000, cwd: this.repoPath });
       return result.stdout.trim();
     });
   }
@@ -60,6 +93,11 @@ export class GitHubProvider implements IssueProvider {
    */
   private async getRepoInfo(): Promise<{ owner: string; name: string } | null> {
     if (this.repoInfo !== undefined) return this.repoInfo;
+    const configured = this.getConfiguredRepoInfo();
+    if (configured) {
+      this.repoInfo = configured;
+      return this.repoInfo;
+    }
     try {
       const raw = await this.gh(["repo", "view", "--json", "owner,name"]);
       const data = JSON.parse(raw);

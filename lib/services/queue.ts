@@ -115,7 +115,11 @@ export async function fetchProjectQueues(
   project: Project,
   workflow: WorkflowConfig = DEFAULT_WORKFLOW,
 ): Promise<Record<string, Issue[]>> {
-  const { provider } = await createProvider({ repo: project.repo, provider: project.provider });
+  const { provider } = await createProvider({
+    repo: project.repo,
+    provider: project.provider,
+    repoRemote: project.repoRemote,
+  });
   const queueLabels = getQueueLabelsWithPriority(workflow);
   const queues: Record<string, Issue[]> = {};
 

@@ -62,6 +62,7 @@ export const GRACE_PERIOD_MS = 5 * 60 * 1_000; // 5 minutes
 export type HealthIssue = {
   type:
     | "session_dead"         // Case 1: active worker but session missing/dead
+    | "session_idle"         // Case 1d: active worker session alive but idle/no telemetry for too long
     | "label_mismatch"       // Case 2: active worker but issue not in active label
     | "stale_worker"         // Case 3: active for >2h
     | "stuck_label"          // Case 4: inactive but issue still has active label
@@ -166,11 +167,14 @@ export async function checkWorkerHealth(opts: {
   workflow?: WorkflowConfig;
   /** Hours after which an active worker is considered stale (default: 2) */
   staleWorkerHours?: number;
+  /** Minutes after which an active worker session with no token telemetry is considered stalled (default: 10) */
+  sessionIdleMinutes?: number;
 }): Promise<HealthFix[]> {
   const {
     workspaceDir, projectSlug, project, role, autoFix, provider, sessions,
     workflow = DEFAULT_WORKFLOW,
     staleWorkerHours = 2,
+    sessionIdleMinutes = 10,
   } = opts;
 
   const fixes: HealthFix[] = [];
@@ -401,6 +405,45 @@ export async function checkWorkerHealth(opts: {
         }
       }
 
+      // Case 1d: Active with alive session but idle + no telemetry (stalled bootstrap/model hang)
+      if (slot.active && sessionKey && sessions && !withinGracePeriod && isSessionAlive(sessionKey, sessions)) {
+        const session = sessions.get(sessionKey);
+        const idleMinutes = session?.updatedAt
+          ? (Date.now() - session.updatedAt) / 60_000
+          : null;
+        const missingTelemetry = session
+          ? session.totalTokens == null && session.contextTokens == null
+          : false;
+
+        if (idleMinutes !== null && missingTelemetry && idleMinutes > sessionIdleMinutes) {
+          const roundedIdle = Math.round(idleMinutes * 10) / 10;
+          const fix: HealthFix = {
+            issue: {
+              type: "session_idle",
+              severity: "critical",
+              project: project.name,
+              projectSlug,
+              role,
+              sessionKey,
+              level,
+              issueId: slot.issueId,
+              slotIndex,
+              message: `${role.toUpperCase()} ${level}[${slotIndex}] session "${sessionKey}" idle for ${roundedIdle}m with no token telemetry. Healing by reverting to queue.`,
+            },
+            fixed: false,
+          };
+          if (autoFix) {
+            if (issue && currentLabel === expectedLabel) {
+              await revertLabel(fix, expectedLabel, slotQueueLabel);
+            }
+            await deactivateSlot();
+            fix.fixed = true;
+          }
+          fixes.push(fix);
+          continue;
+        }
+      }
+
       // Case 3: Active with correct label and alive session — check for staleness
       if (slot.active && slot.startTime && sessionKey && sessions && isSessionAlive(sessionKey, sessions)) {
         const hours = (Date.now() - new Date(slot.startTime).getTime()) / 3_600_000;
@@ -601,4 +644,3 @@ export async function scanOrphanedLabels(opts: {
 
   return fixes;
 }
-

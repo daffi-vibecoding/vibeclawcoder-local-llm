@@ -65,6 +65,7 @@ const TimeoutConfigSchema = z.object({
   sessionPatchMs: z.number().positive().optional(),
   dispatchMs: z.number().positive().optional(),
   staleWorkerHours: z.number().positive().optional(),
+  sessionIdleMinutes: z.number().positive().optional(),
   sessionContextBudget: z.number().min(0).max(1).optional(),
 }).optional();
 

@@ -32,6 +32,8 @@ export type TimeoutConfig = {
   sessionPatchMs?: number;
   dispatchMs?: number;
   staleWorkerHours?: number;
+  /** Minutes after which an active worker session with no token telemetry is treated as stalled. Default: 10 */
+  sessionIdleMinutes?: number;
   /** Context budget ratio (0-1). Clear session when context exceeds this fraction of the context window. Default: 0.6 */
   sessionContextBudget?: number;
 };
@@ -64,6 +66,7 @@ export type ResolvedTimeouts = {
   sessionPatchMs: number;
   dispatchMs: number;
   staleWorkerHours: number;
+  sessionIdleMinutes: number;
   /** Context budget ratio (0-1). Clear session when context exceeds this fraction of the context window. Default: 0.6 */
   sessionContextBudget: number;
 };

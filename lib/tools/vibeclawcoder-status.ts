@@ -114,7 +114,11 @@ async function safeOpenPrCount(project: Project): Promise<number | null> {
 
 async function safeQueueCounts(workspaceDir: string, project: Project): Promise<{ doing: number | null; todo: number | null; refining: number | null }> {
   try {
-    const { provider } = await createProvider({ repo: project.repo, provider: project.provider });
+    const { provider } = await createProvider({
+      repo: project.repo,
+      provider: project.provider,
+      repoRemote: project.repoRemote,
+    });
     const workflow = await loadWorkflow(workspaceDir, project.name);
 
     let doing = 0;

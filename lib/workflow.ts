@@ -554,7 +554,7 @@ export function getRevertLabel(workflow: WorkflowConfig, role: Role): string {
  */
 export function detectRoleFromLabel(workflow: WorkflowConfig, label: string): Role | null {
   for (const state of Object.values(workflow.states)) {
-    if (state.label === label && state.type === StateType.QUEUE && state.role) {
+    if (state.label === label && state.role) {
       return state.role;
     }
   }
