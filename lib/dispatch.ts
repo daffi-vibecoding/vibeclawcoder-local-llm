@@ -228,6 +228,37 @@ export async function dispatchTask(
     existingSessionKey = null;
   }
 
+  // Branch sanity guard: if this repository is currently on a branch for a different issue,
+  // force a fresh worker session so stale branch context is not reused.
+  try {
+    const repoPath = resolveRepoPath(project.repo);
+    const branchName = await getCurrentBranch(repoPath);
+    const branchIssueId = extractIssueIdFromBranch(branchName);
+    if (branchIssueId !== null && branchIssueId !== issueId) {
+      await auditLog(workspaceDir, "dispatch_warning", {
+        step: "branch_issue_mismatch",
+        project: project.name,
+        issue: issueId,
+        branchName,
+        branchIssueId,
+      });
+
+      // Deterministic session keys mean "spawn" can still reuse stale context unless we delete.
+      await runCommand(
+        ["openclaw", "gateway", "call", "sessions.delete", "--params", JSON.stringify({ key: sessionKey })],
+        { timeoutMs: 10_000 },
+      ).catch(() => {});
+
+      await updateSlot(workspaceDir, project.slug, role, level, slotIndex, {
+        sessionKey: null,
+      }).catch(() => {});
+
+      existingSessionKey = null;
+    }
+  } catch {
+    // Best-effort safety check
+  }
+
   const sessionAction = existingSessionKey ? "send" : "spawn";
 
   // Fetch comments to include in task context
@@ -373,23 +404,6 @@ export async function dispatchTask(
   }
 
   // Step 6: Audit
-  try {
-    const repoPath = resolveRepoPath(project.repo);
-    const branchName = await getCurrentBranch(repoPath);
-    const branchIssueId = extractIssueIdFromBranch(branchName);
-    if (branchIssueId !== null && branchIssueId !== issueId) {
-      await auditLog(workspaceDir, "dispatch_warning", {
-        step: "branch_issue_mismatch",
-        project: project.name,
-        issue: issueId,
-        branchName,
-        branchIssueId,
-      });
-    }
-  } catch {
-    // Best-effort sanity check
-  }
-
   await auditDispatch(workspaceDir, {
     project: project.name, issueId, issueTitle,
     role, level, model, sessionAction, sessionKey,
