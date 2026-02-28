@@ -35,6 +35,7 @@ const WorkflowConfigSchema = z.object({
   reviewPolicy: z.enum(["human", "agent", "skip"]).optional(),
   testPolicy: z.enum(["skip", "agent"]).optional(),
   roleExecution: z.enum(["parallel", "sequential"]).optional(),
+  roleFallbacks: z.record(z.string(), z.string()).optional(),
   maxWorkersPerLevel: z.number().int().positive().optional(),
   states: z.record(z.string(), StateConfigSchema),
 });

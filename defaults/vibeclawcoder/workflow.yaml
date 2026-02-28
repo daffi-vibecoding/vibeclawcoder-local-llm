@@ -12,15 +12,13 @@ roles:
     maxWorkers: 1
     models:
       standard: <GITHUB_APP_MODEL_REVIEWER_STANDARD>
-  architect:
-    levels: [standard]
-    defaultLevel: standard
-    maxWorkers: 1
-    models:
-      standard: <GITHUB_APP_MODEL_ARCHITECT_STANDARD>
+  architect: false
   tester: false
 
 workflow:
   initial: planning
   reviewPolicy: agent
   roleExecution: parallel
+  roleFallbacks:
+    tester: reviewer
+    architect: reviewer

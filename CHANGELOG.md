@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v1.1.4 - 2026-02-27
+
+- fix: add workflow-aware `roleFallbacks` resolution so states assigned to disabled roles are auto-hydrated from enabled fallback roles (prevents stuck queue states)
+- fix: surface explicit config error when workflow references disabled/missing roles without fallback mapping
+- fix: restore built-in `tester` role registry support (model, level, completion results) so test-state dispatch/finish remains valid
+- chore: default workflow now ships with two-lane setup (`developer` + `reviewer`) and fallback mapping for `tester`/`architect` to reviewer
+
 ## v1.1.3 - 2026-02-26
 
 - docs: align README release stage/version to v1.1.3

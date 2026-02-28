@@ -166,6 +166,68 @@ function resolveLevelMaxWorkers(
   return result;
 }
 
+function eventToResult(event: string): string {
+  if (event === "COMPLETE") return "done";
+  return event.toLowerCase();
+}
+
+function deriveCompletionResultsFromWorkflow(workflow: WorkflowConfig, role: string): string[] {
+  const results = new Set<string>();
+  for (const state of Object.values(workflow.states)) {
+    if (state.type !== "active" || state.role !== role || !state.on) continue;
+    for (const event of Object.keys(state.on)) {
+      results.add(eventToResult(event));
+    }
+  }
+  return [...results];
+}
+
+function applyRoleFallbacks(
+  roles: Record<string, ResolvedRoleConfig>,
+  workflow: WorkflowConfig,
+): void {
+  const requiredRoles = new Set<string>();
+  for (const state of Object.values(workflow.states)) {
+    if (state.role) requiredRoles.add(state.role);
+  }
+
+  const unresolved: string[] = [];
+
+  for (const roleId of requiredRoles) {
+    const current = roles[roleId];
+    if (current?.enabled) continue;
+
+    const fallbackRoleId = workflow.roleFallbacks?.[roleId];
+    const fallback = fallbackRoleId ? roles[fallbackRoleId] : undefined;
+    if (!fallback?.enabled) {
+      unresolved.push(roleId);
+      continue;
+    }
+
+    const derivedResults = deriveCompletionResultsFromWorkflow(workflow, roleId);
+    const completionResults = current?.completionResults?.length
+      ? [...current.completionResults]
+      : (derivedResults.length > 0 ? derivedResults : [...fallback.completionResults]);
+
+    roles[roleId] = {
+      levelMaxWorkers: { ...fallback.levelMaxWorkers },
+      levels: [...fallback.levels],
+      defaultLevel: fallback.defaultLevel,
+      models: { ...fallback.models },
+      emoji: { ...fallback.emoji },
+      completionResults,
+      enabled: true,
+    };
+  }
+
+  if (unresolved.length > 0) {
+    throw new Error(
+      `Workflow references disabled/missing roles without valid fallback: ${unresolved.join(", ")}. ` +
+      `Enable these roles in workflow.yaml or set workflow.roleFallbacks.<role> to an enabled role.`,
+    );
+  }
+}
+
 function resolve(config: VibeClawCoderConfig): ResolvedConfig {
   const roles: Record<string, ResolvedRoleConfig> = {};
   const globalMaxWorkers = config.workflow?.maxWorkersPerLevel ?? DEFAULT_MAX_WORKERS_PER_LEVEL;
@@ -221,9 +283,16 @@ function resolve(config: VibeClawCoderConfig): ResolvedConfig {
   const workflow: WorkflowConfig = {
     initial: config.workflow?.initial ?? DEFAULT_WORKFLOW.initial,
     reviewPolicy: config.workflow?.reviewPolicy ?? DEFAULT_WORKFLOW.reviewPolicy,
+    testPolicy: config.workflow?.testPolicy ?? DEFAULT_WORKFLOW.testPolicy,
     roleExecution: config.workflow?.roleExecution ?? DEFAULT_WORKFLOW.roleExecution,
+    roleFallbacks: {
+      ...(DEFAULT_WORKFLOW.roleFallbacks ?? {}),
+      ...(config.workflow?.roleFallbacks ?? {}),
+    },
     states: { ...DEFAULT_WORKFLOW.states, ...config.workflow?.states },
   };
+
+  applyRoleFallbacks(roles, workflow);
 
   // Validate structural integrity (cross-references between states)
   const integrityErrors = validateWorkflowIntegrity(workflow);

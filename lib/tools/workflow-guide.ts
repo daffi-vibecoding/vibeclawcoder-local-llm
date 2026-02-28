@@ -247,6 +247,13 @@ roles:
   tester: false
 \`\`\`
 
+If your workflow still has states for that role, add a fallback mapping so those states remain runnable:
+\`\`\`yaml
+workflow:
+  roleFallbacks:
+    tester: reviewer
+\`\`\`
+
 ## Adding a custom role
 
 Define the role with all required fields. The role key must also be referenced as a \`role:\` in at least one workflow state.

@@ -106,6 +106,12 @@ export type WorkflowConfig = {
   reviewPolicy?: ReviewPolicy;
   testPolicy?: TestPolicy;
   roleExecution?: ExecutionMode;
+  /**
+   * Optional fallback role mapping for required workflow roles.
+   * Example: { tester: "reviewer" } means if tester is disabled/missing in config,
+   * inherit reviewer model/level config so test states still dispatch.
+   */
+  roleFallbacks?: Record<string, string>;
   /** Default max workers per level across all roles. Default: 2. */
   maxWorkersPerLevel?: number;
   states: Record<string, StateConfig>;
