@@ -3,7 +3,7 @@ roles:
   developer:
     levels: [standard]
     defaultLevel: standard
-    maxWorkers: 2
+    maxWorkers: 1
     models:
       standard: <GITHUB_APP_MODEL_DEVELOPER_STANDARD>
   reviewer:
@@ -23,4 +23,4 @@ roles:
 workflow:
   initial: planning
   reviewPolicy: agent
-  roleExecution: parallel
+  roleExecution: sequential

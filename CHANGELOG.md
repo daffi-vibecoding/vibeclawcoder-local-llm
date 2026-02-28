@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.1.4 - 2026-02-27
+
+- feat(stability): default to serialized execution (`roleExecution: sequential`) and one developer slot (`maxWorkers: 1`)
+- test(simulation): add brute-force shared-repo git contention simulation script (`scripts/simulate-git-contention.sh`)
+- docs: add concurrency simulation report with measured failure rates and rationale for serialized default
+
 ## v1.1.3 - 2026-02-26
 
 - docs: align README release stage/version to v1.1.3
