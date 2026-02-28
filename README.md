@@ -156,12 +156,13 @@ Designed by a novice vibecoder for other novice vibecoders.
 
 ## Current fork stage
 
-✅ **MVP v1.1.3 (local-first) is live**
+✅ **MVP v1.1.4 (local-first) is live**
 
 For release notes, see [`CHANGELOG.md`](./CHANGELOG.md).
 
 This fork now includes:
-- hard-cut 3-role model (`developer`, `reviewer`, `architect`)
+- workflow-aware role fallback routing (keep rich states while operating with lean active lanes)
+- default lean lane setup (`developer` + `reviewer`) with fallback mapping for `tester`/`architect`
 - local-first MiniMax default coding lane
 - Codex mini review lane + Codex 5.3 strategy lane
 - minimal operator docs and runbook

@@ -4,6 +4,7 @@
  * Hard-cut design:
  * - developer (local-first coding)
  * - reviewer (cloud-light review)
+ * - tester (QA gate, can inherit reviewer lane via workflow roleFallbacks)
  * - architect (strategy/escalation)
  *
  * Single level only: standard
@@ -42,6 +43,23 @@ export const ROLE_REGISTRY: Record<string, RoleConfig> = {
     fallbackEmoji: "👁️",
     completionResults: ["approve", "reject", "blocked"],
     sessionKeyPattern: "reviewer",
+    notifications: { onStart: true, onComplete: true },
+  },
+
+  tester: {
+    id: "tester",
+    displayName: "TESTER",
+    levels: ["standard"],
+    defaultLevel: "standard",
+    models: {
+      standard: "openai-codex/gpt-5.1-codex-mini",
+    },
+    emoji: {
+      standard: "🧪",
+    },
+    fallbackEmoji: "🧪",
+    completionResults: ["pass", "fail", "refine", "blocked"],
+    sessionKeyPattern: "tester",
     notifications: { onStart: true, onComplete: true },
   },
 

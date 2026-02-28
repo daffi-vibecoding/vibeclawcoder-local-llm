@@ -47,3 +47,55 @@ describe("loadConfig placeholder model fallback", () => {
     );
   });
 });
+
+describe("loadConfig workflow role fallbacks", () => {
+  it("hydrates disabled tester role from reviewer when workflow references tester states", async () => {
+    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibe-loader-fallback-"));
+    tempDirs.push(workspaceDir);
+
+    const dataDir = path.join(workspaceDir, "vibeclawcoder");
+    await fs.mkdir(dataDir, { recursive: true });
+    await fs.writeFile(
+      path.join(dataDir, "workflow.yaml"),
+      [
+        "roles:",
+        "  reviewer:",
+        "    levels: [standard]",
+        "    defaultLevel: standard",
+        "    models:",
+        "      standard: custom/reviewer",
+        "  tester: false",
+        "workflow:",
+        "  roleFallbacks:",
+        "    tester: reviewer",
+      ].join("\n") + "\n",
+      "utf-8",
+    );
+
+    const resolved = await loadConfig(workspaceDir);
+    assert.strictEqual(resolved.roles.tester?.enabled, true);
+    assert.strictEqual(resolved.roles.tester?.models.standard, "custom/reviewer");
+    assert.deepStrictEqual(resolved.roles.tester?.completionResults, ["pass", "fail", "refine", "blocked"]);
+  });
+
+  it("throws when workflow references disabled roles without fallback", async () => {
+    const workspaceDir = await fs.mkdtemp(path.join(os.tmpdir(), "vibe-loader-fallback-"));
+    tempDirs.push(workspaceDir);
+
+    const dataDir = path.join(workspaceDir, "vibeclawcoder");
+    await fs.mkdir(dataDir, { recursive: true });
+    await fs.writeFile(
+      path.join(dataDir, "workflow.yaml"),
+      [
+        "roles:",
+        "  tester: false",
+      ].join("\n") + "\n",
+      "utf-8",
+    );
+
+    await assert.rejects(
+      () => loadConfig(workspaceDir),
+      /disabled\/missing roles without valid fallback: tester/,
+    );
+  });
+});
